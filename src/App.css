@@ -1,0 +1,40 @@
+body {
+  background: linear-gradient(135deg, #0f0f1e 0%, #0a0e1e 100%);
+  min-height: 100vh;
+  margin: 0;
+}
+
+.login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  background: #2f3136;
+}
+
+.login-card {
+  background: #36393f;
+  padding: 40px;
+  border-radius: 8px;
+  border: 2px solid #7289da;
+}
+
+.login-card h1 {
+  color: #7289da;
+  margin-bottom: 20px;
+}
+
+.discord-btn {
+  background: #7289da;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.discord-btn:hover {
+  background: #5b6eae;
+}
