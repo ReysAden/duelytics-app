@@ -126,7 +126,7 @@ router.get('/:sessionId/stats', authenticate, async (req, res) => {
     .from('player_session_stats')
     .select(`
       *,
-      ladder_tiers (tier_name)
+      ladder_tiers (tier_name, wins_required)
     `)
     .eq('session_id', req.params.sessionId)
     .eq('user_id', req.user.discord_id)

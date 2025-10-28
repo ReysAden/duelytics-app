@@ -1,6 +1,8 @@
 import { supabase } from './lib/supabase'
 import { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import SessionSelector from './pages/SessionSelector/SessionSelector'
+import DuelRecords from './pages/DuelRecords/DuelRecords'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -115,7 +117,14 @@ function App() {
   }
 
   if (user) {
-    return <SessionSelector user={user} userRoles={userRoles} />
+    return (
+      <Router>
+        <Routes>
+          <Route path="/" element={<SessionSelector user={user} userRoles={userRoles} />} />
+          <Route path="/session/:sessionId" element={<DuelRecords />} />
+        </Routes>
+      </Router>
+    )
   }
 
   return (

@@ -85,7 +85,7 @@ CREATE TABLE player_session_stats (
     user_id VARCHAR(20) REFERENCES users(discord_id),
     total_games INTEGER DEFAULT 0,
     total_wins INTEGER DEFAULT 0,
-    current_points INTEGER DEFAULT 0,
+    current_points DECIMAL(10,2) DEFAULT 0,
     current_tier_id INTEGER REFERENCES ladder_tiers(id),
     current_net_wins INTEGER DEFAULT 0,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +104,7 @@ CREATE TABLE duels (
     coin_flip_won BOOLEAN DEFAULT FALSE,
     went_first BOOLEAN DEFAULT FALSE,
     result VARCHAR(10) CHECK (result IN ('win', 'loss')),
-    points_change INTEGER DEFAULT 0,
+    points_change DECIMAL(10,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -37,7 +37,8 @@ router.post('/', authenticate, async (req, res) => {
     } else if (session.game_mode === 'duelist_cup') {
       pointsChange = result === 'win' ? (pointsInput || 1000) : 0
     } else if (session.game_mode === 'rated') {
-      pointsChange = result === 'win' ? Math.abs(pointsInput || 7) : -Math.abs(pointsInput || 7)
+      const ratingValue = pointsInput || 7.00
+      pointsChange = result === 'win' ? Math.abs(ratingValue) : -Math.abs(ratingValue)
     }
 
     // Insert duel
@@ -58,13 +59,33 @@ router.post('/', authenticate, async (req, res) => {
 
     if (error) throw error
 
-    // Update player stats using RPC
-    await supabaseAdmin.rpc('update_player_stats', {
+    // Update player stats using RPC based on game mode
+    const rpcFunction = session.game_mode === 'ladder' 
+      ? 'update_ladder_stats'
+      : session.game_mode === 'rated'
+      ? 'update_rated_stats'
+      : 'update_duelist_cup_stats';
+    
+    console.log(`Calling RPC: ${rpcFunction} with params:`, {
       p_session_id: sessionId,
       p_user_id: req.user.discord_id,
       p_result: result,
-      p_points_change: pointsChange
-    })
+      p_point_change: pointsChange
+    });
+    
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc(rpcFunction, {
+      p_session_id: sessionId,
+      p_user_id: req.user.discord_id,
+      p_result: result,
+      p_point_change: pointsChange
+    });
+    
+    if (rpcError) {
+      console.error('RPC Error:', rpcError);
+      throw new Error(`Failed to update stats: ${rpcError.message}`);
+    }
+    
+    console.log('RPC success:', rpcData);
 
     // Check tier progression for ladder mode
     let tierProgression = null

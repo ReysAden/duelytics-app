@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION update_rated_stats(
   p_session_id INTEGER,
   p_user_id VARCHAR(20),
   p_result VARCHAR(10),
-  p_point_change INTEGER
+  p_point_change DECIMAL(10,2)
 )
 RETURNS VOID AS $$
 BEGIN
@@ -48,7 +48,7 @@ CREATE OR REPLACE FUNCTION update_duelist_cup_stats(
   p_session_id INTEGER,
   p_user_id VARCHAR(20),
   p_result VARCHAR(10),
-  p_point_change INTEGER
+  p_point_change DECIMAL(10,2)
 )
 RETURNS VOID AS $$
 BEGIN
