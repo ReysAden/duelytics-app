@@ -3,6 +3,21 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import Submit from './tabs/Submit';
+import PersonalStats from './tabs/PersonalStats/PersonalStats';
+import DuelHistory from './tabs/DuelHistory/DuelHistory';
+
+const getTierColor = (tierName) => {
+  if (!tierName) return '#ffffff';
+  const tier = tierName.toLowerCase();
+  if (tier.includes('rookie')) return '#4ade80';
+  if (tier.includes('bronze')) return '#cd7f32';
+  if (tier.includes('silver')) return '#c0c0c0';
+  if (tier.includes('gold')) return '#ffd700';
+  if (tier.includes('platinum')) return '#87ceeb';
+  if (tier.includes('diamond')) return '#b19cd9';
+  if (tier.includes('master')) return '#ff8c00';
+  return '#ffffff';
+};
 
 function DuelRecords() {
   const { sessionId } = useParams();
@@ -84,18 +99,19 @@ function DuelRecords() {
     <>
       <aside className="sidebar">
         <h1 className="sidebar-title">Duelytics</h1>
+        <div className="sidebar-divider"></div>
         <p className="sidebar-session-name">
           {sessionData?.name || 'Session Name'}
         </p>
-        
-        <div className="sidebar-divider"></div>
         
         <div className="sidebar-stats">
           {sessionData?.gameMode === 'ladder' ? (
             <>
               <div className="stat-item">
                 <span className="stat-label">Rank</span>
-                <span className="stat-value">{userStats.tier || 'Unranked'}</span>
+                <span className="stat-value" style={{ color: getTierColor(userStats.tier) }}>
+                  {userStats.tier || 'Unranked'}
+                </span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">Net Wins</span>
@@ -105,7 +121,11 @@ function DuelRecords() {
           ) : (
             <div className="stat-item">
               <span className="stat-label">Points</span>
-              <span className="stat-value">{userStats.points.toFixed(2)}</span>
+              <span className="stat-value">
+                {sessionData?.gameMode === 'rated' 
+                  ? userStats.points.toFixed(2) 
+                  : Math.round(userStats.points)}
+              </span>
             </div>
           )}
           <div className="stat-item">
@@ -168,17 +188,25 @@ function DuelRecords() {
       </aside>
       
       <main className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">{activeTab}</h1>
-        </header>
-        <div className="content-body">
-          {activeTab === 'Submit' && <Submit onDuelSubmitted={fetchUserStats} />}
-          {activeTab === 'Personal Stats' && <div>Personal Stats tab coming soon...</div>}
-          {activeTab === 'Deck Winrates' && <div>Deck Winrates tab coming soon...</div>}
-          {activeTab === 'Matchup Matrix' && <div>Matchup Matrix tab coming soon...</div>}
-          {activeTab === 'Duel History' && <div>Duel History tab coming soon...</div>}
-          {activeTab === 'Leaderboard' && <div>Leaderboard tab coming soon...</div>}
-        </div>
+        {activeTab === 'Personal Stats' ? (
+          <PersonalStats sessionData={sessionData} />
+        ) : activeTab === 'Duel History' ? (
+          <DuelHistory sessionId={sessionId} onDuelDeleted={fetchUserStats} />
+        ) : (
+          <>
+            {activeTab !== 'Submit' && (
+              <header className="content-header">
+                <h1 className="content-title">{activeTab}</h1>
+              </header>
+            )}
+            <div className="content-body">
+              {activeTab === 'Submit' && <Submit onDuelSubmitted={fetchUserStats} />}
+              {activeTab === 'Deck Winrates' && <div>Deck Winrates tab coming soon...</div>}
+              {activeTab === 'Matchup Matrix' && <div>Matchup Matrix tab coming soon...</div>}
+              {activeTab === 'Leaderboard' && <div>Leaderboard tab coming soon...</div>}
+            </div>
+          </>
+        )}
       </main>
     </>
   );

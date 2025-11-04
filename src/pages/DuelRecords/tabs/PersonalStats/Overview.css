@@ -1,0 +1,121 @@
+.overview-container {
+  max-width: 900px;
+}
+
+.overview-loading {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.stat-card-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.stat-card-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-card-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+}
+
+.turn-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.turn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.deck-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 8px 0;
+}
+
+.deck-stats {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+
+.faced-decks {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.faced-deck-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.faced-deck-item:last-child {
+  border-bottom: none;
+}
+
+.faced-deck-rank {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 24px;
+}
+
+.faced-deck-name {
+  flex: 1;
+  font-size: 15px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.faced-deck-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}

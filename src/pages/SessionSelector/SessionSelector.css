@@ -116,20 +116,3 @@
   padding: 32px;
   overflow-y: auto;
 }
-
-.content-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.content-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-.content-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}

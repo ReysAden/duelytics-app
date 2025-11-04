@@ -35,7 +35,8 @@ router.post('/', authenticate, async (req, res) => {
     if (session.game_mode === 'ladder') {
       pointsChange = result === 'win' ? 1 : -1
     } else if (session.game_mode === 'duelist_cup') {
-      pointsChange = result === 'win' ? (pointsInput || 1000) : 0
+      const cupPoints = pointsInput || 1000
+      pointsChange = result === 'win' ? cupPoints : -cupPoints
     } else if (session.game_mode === 'rated') {
       const ratingValue = pointsInput || 7.00
       pointsChange = result === 'win' ? Math.abs(ratingValue) : -Math.abs(ratingValue)
@@ -143,6 +144,86 @@ router.get('/session/:sessionId/user', authenticate, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message })
   res.json({ duels: data })
+})
+
+// Delete duel
+router.delete('/:duelId', authenticate, async (req, res) => {
+  try {
+    const { duelId } = req.params
+
+    // Get duel info before deletion
+    const { data: duel } = await supabaseAdmin
+      .from('duels')
+      .select('user_id, session_id, result, points_change')
+      .eq('id', duelId)
+      .single()
+
+    if (!duel) return res.status(404).json({ error: 'Duel not found' })
+    if (duel.user_id !== req.user.discord_id) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    // Delete duel
+    const { error: deleteError } = await supabaseAdmin
+      .from('duels')
+      .delete()
+      .eq('id', duelId)
+
+    if (deleteError) throw deleteError
+
+    // Recalculate stats from all remaining duels
+    const { data: remainingDuels } = await supabaseAdmin
+      .from('duels')
+      .select('result, points_change')
+      .eq('session_id', duel.session_id)
+      .eq('user_id', duel.user_id)
+      .order('created_at', { ascending: true })
+
+    // Get session info
+    const { data: session } = await supabaseAdmin
+      .from('sessions')
+      .select('game_mode, starting_rating')
+      .eq('id', duel.session_id)
+      .single()
+
+    // Calculate totals
+    const totalGames = remainingDuels?.length || 0
+    const totalWins = remainingDuels?.filter(d => d.result === 'win').length || 0
+    
+    let currentPoints = 0
+    if (session.game_mode === 'rated') {
+      currentPoints = session.starting_rating || 1500
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    } else if (session.game_mode === 'duelist_cup') {
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    } else if (session.game_mode === 'ladder') {
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    }
+
+    // Update player stats
+    const { error: updateError } = await supabaseAdmin
+      .from('player_session_stats')
+      .update({
+        total_games: totalGames,
+        total_wins: totalWins,
+        current_points: currentPoints,
+        updated_at: new Date().toISOString()
+      })
+      .eq('session_id', duel.session_id)
+      .eq('user_id', duel.user_id)
+
+    if (updateError) throw updateError
+
+    res.json({ success: true, message: 'Duel deleted and stats recalculated' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
 })
 
 module.exports = router

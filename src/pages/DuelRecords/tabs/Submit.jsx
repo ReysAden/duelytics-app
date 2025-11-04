@@ -34,6 +34,19 @@ function Submit({ onDuelSubmitted }) {
     fetchDecks();
   }, [sessionId]);
 
+  // Load last selected deck for this session
+  useEffect(() => {
+    if (decks.length > 0 && sessionId) {
+      const savedDeckId = localStorage.getItem(`lastDeck_${sessionId}`);
+      if (savedDeckId) {
+        const savedDeck = decks.find(d => d.id === parseInt(savedDeckId));
+        if (savedDeck) {
+          setFormData(prev => ({ ...prev, yourDeck: savedDeck }));
+        }
+      }
+    }
+  }, [decks, sessionId]);
+
   const fetchSessionData = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`);
@@ -93,8 +106,9 @@ function Submit({ onDuelSubmitted }) {
 
       if (response.ok) {
         alert('Duel submitted successfully!');
+        const lastDeck = formData.yourDeck;
         setFormData({
-          yourDeck: null,
+          yourDeck: lastDeck,
           opponentDeck: null,
           coinFlip: null,
           turnOrder: null,
@@ -157,6 +171,7 @@ function Submit({ onDuelSubmitted }) {
                       className="dropdown-item"
                       onMouseDown={() => {
                         setFormData(prev => ({ ...prev, yourDeck: deck }));
+                        localStorage.setItem(`lastDeck_${sessionId}`, deck.id);
                         setYourDeckSearch('');
                         setShowYourDeckDropdown(false);
                       }}

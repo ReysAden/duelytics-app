@@ -1,0 +1,86 @@
+.deck-analysis-container {
+  max-width: 1200px;
+}
+
+.deck-analysis-loading {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.deck-card {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+
+.deck-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.deck-image-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.deck-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.deck-info {
+  padding: 10px;
+}
+
+.deck-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-winrate {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.deck-stats-row {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.deck-record {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.deck-wins {
+  color: #4ade80;
+}
+
+.deck-losses {
+  color: #f87171;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}

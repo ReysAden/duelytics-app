@@ -1,0 +1,243 @@
+/* View toggles */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.toggle-btn {
+  padding: 6px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Matrix view */
+.matchups-container {
+  max-width: 100%;
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.matchups-loading,
+.no-data {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Most faced view */
+.most-faced-layout {
+  display: flex;
+  gap: 20px;
+  height: 350px;
+  align-items: center;
+}
+
+.pie-chart {
+  width: 280px;
+  height: 280px;
+  flex-shrink: 0;
+}
+
+.legend-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.legend-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.filter-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 1);
+}
+
+.legend-header {
+  display: grid;
+  grid-template-columns: 1fr 50px 50px;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legend-header span:nth-child(2),
+.legend-header span:nth-child(3) {
+  text-align: right;
+}
+
+.legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 260px;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 1fr 50px 50px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.legend-item:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+
+.deck-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.games,
+.percentage {
+  text-align: right;
+  font-weight: 400;
+}
+
+.matchups-table {
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  table-layout: fixed;
+  width: auto;
+}
+
+.corner-cell {
+  background: rgba(0, 0, 0, 0.9);
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-cell {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-row {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.header-col {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.deck-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.matchup-cell {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
+  text-align: center;
+  vertical-align: middle;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: help;
+  transition: all 0.15s ease;
+}
+
+.matchup-cell:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.winrate {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.record {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-matchup {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.3);
+}

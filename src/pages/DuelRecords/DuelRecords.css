@@ -37,6 +37,10 @@
   width: 100%;
 }
 
+.sidebar-title + .sidebar-divider {
+  margin-top: 8px;
+}
+
 .sidebar-stats {
   padding: 0 20px;
   display: flex;
@@ -83,7 +87,7 @@
   padding: 10px 20px;
   text-align: left;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 600;
   cursor: pointer;
   border-radius: 0;
   transition: all 0.15s ease;

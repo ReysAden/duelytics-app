@@ -1,0 +1,58 @@
+.subtab-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subtab-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.date-filter {
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+}
+
+.date-filter:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.subtab-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.subtab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.subtab-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+  border: 1px solid rgb(99, 102, 241);
+}
+
+.subtab-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
