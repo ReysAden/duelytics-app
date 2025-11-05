@@ -44,11 +44,12 @@ function DeckAnalysis({ sessionId, dateFilter }) {
     <div className="deck-analysis-container">
       <div className="deck-grid">
         {decks.map((deck) => (
-          <div key={deck.id} className="deck-card">
-            <div className="deck-image-container">
-              <img src={deck.image_url} alt={deck.name} className="deck-image" />
-            </div>
-            <div className="deck-info">
+          <div 
+            key={deck.id} 
+            className="deck-card"
+            style={{ backgroundImage: `url(${deck.image_url})` }}
+          >
+            <div className="deck-overlay">
               <div className="deck-card-name">{deck.name}</div>
               <div className="deck-winrate" style={{ color: getWinRateColor(deck.winRate) }}>
                 {deck.winRate.toFixed(1)}%

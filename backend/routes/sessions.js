@@ -138,19 +138,116 @@ router.get('/:sessionId/stats', authenticate, async (req, res) => {
 
 // Get session leaderboard
 router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
-  const { data, error } = await supabaseAdmin
-    .from('player_session_stats')
-    .select(`
-      *,
-      users (username, avatar),
-      ladder_tiers (tier_name)
-    `)
-    .eq('session_id', req.params.sessionId)
-    .order('current_points', { ascending: false })
-    .limit(50)
+  try {
+    const sessionId = req.params.sessionId
 
-  if (error) return res.status(400).json({ error: error.message })
-  res.json({ leaderboard: data })
+    // Get session info
+    const { data: session } = await supabaseAdmin
+      .from('sessions')
+      .select('game_mode')
+      .eq('id', sessionId)
+      .single()
+
+    // Get all players
+    const { data: players } = await supabaseAdmin
+      .from('player_session_stats')
+      .select(`
+        user_id,
+        current_points,
+        total_games,
+        users!player_session_stats_user_id_fkey (username),
+        ladder_tiers (tier_name)
+      `)
+      .eq('session_id', sessionId)
+      .order('current_points', { ascending: false })
+
+    if (!players || players.length === 0) {
+      return res.json({ leaderboard: [] })
+    }
+
+    // Get duels for each player to calculate stats
+    const leaderboardData = await Promise.all(players.map(async (player) => {
+      const { data: duels } = await supabaseAdmin
+        .from('duels')
+        .select(`
+          result,
+          went_first,
+          player_deck_id,
+          player_deck:decks!duels_player_deck_id_fkey(name, image_url)
+        `)
+        .eq('session_id', sessionId)
+        .eq('user_id', player.user_id)
+
+      if (!duels || duels.length === 0) {
+        return {
+          user_id: player.user_id,
+          username: player.users.username,
+          points: player.current_points,
+          tier_name: player.ladder_tiers?.tier_name || null,
+          total_games: 0,
+          top_deck: null,
+          top_deck_image: null,
+          overall_winrate: 0,
+          first_winrate: 0,
+          second_winrate: 0
+        }
+      }
+
+      // Overall win rate
+      const wins = duels.filter(d => d.result === 'win').length
+      const overall_winrate = (wins / duels.length) * 100
+
+      // Turn order win rates
+      const firstDuels = duels.filter(d => d.went_first)
+      const secondDuels = duels.filter(d => !d.went_first)
+      const firstWins = firstDuels.filter(d => d.result === 'win').length
+      const secondWins = secondDuels.filter(d => d.result === 'win').length
+      const first_winrate = firstDuels.length > 0 ? (firstWins / firstDuels.length) * 100 : 0
+      const second_winrate = secondDuels.length > 0 ? (secondWins / secondDuels.length) * 100 : 0
+
+      // Most played deck
+      const deckCounts = {}
+      duels.forEach(duel => {
+        const deckId = duel.player_deck_id
+        if (!deckCounts[deckId]) {
+          deckCounts[deckId] = {
+            count: 0,
+            name: duel.player_deck.name,
+            image: duel.player_deck.image_url
+          }
+        }
+        deckCounts[deckId].count++
+      })
+
+      const mostPlayed = Object.values(deckCounts).sort((a, b) => b.count - a.count)[0]
+
+      return {
+        user_id: player.user_id,
+        username: player.users.username,
+        points: player.current_points,
+        tier_name: player.ladder_tiers?.tier_name || null,
+        total_games: duels.length,
+        top_deck: mostPlayed?.name || null,
+        top_deck_image: mostPlayed?.image || null,
+        overall_winrate,
+        first_winrate,
+        second_winrate
+      }
+    }))
+
+    // Sort by points (or tier for ladder mode)
+    const sortedLeaderboard = session?.game_mode === 'ladder'
+      ? leaderboardData.sort((a, b) => {
+          // Sort by tier first, then by games if same tier
+          if (a.tier_name === b.tier_name) return b.total_games - a.total_games
+          return (b.tier_name || '').localeCompare(a.tier_name || '')
+        })
+      : leaderboardData.sort((a, b) => b.points - a.points)
+
+    res.json({ leaderboard: sortedLeaderboard })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
 })
 
 // Get overview stats
@@ -670,6 +767,149 @@ router.get('/:sessionId/matchups', authenticate, async (req, res) => {
     })
 
     // Convert to array with win rates
+    const matchups = Object.values(matchupsMap).map(m => ({
+      ...m,
+      winRate: Math.round((m.wins / (m.wins + m.losses)) * 100)
+    }))
+
+    res.json({
+      matchups,
+      decks: unifiedDecks
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Get deck winrates for all users in session
+router.get('/:sessionId/deck-winrates', authenticate, async (req, res) => {
+  try {
+    const sessionId = req.params.sessionId
+
+    // Get all duels in the session with deck info
+    const { data: duels } = await supabaseAdmin
+      .from('duels')
+      .select(`
+        result,
+        went_first,
+        player_deck_id,
+        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url)
+      `)
+      .eq('session_id', sessionId)
+
+    if (!duels || duels.length === 0) {
+      return res.json({ decks: [] })
+    }
+
+    // Aggregate stats by deck
+    const deckStatsMap = new Map()
+    
+    duels.forEach(duel => {
+      const deckId = duel.player_deck_id
+      if (!deckStatsMap.has(deckId)) {
+        deckStatsMap.set(deckId, {
+          id: duel.player_deck.id,
+          name: duel.player_deck.name,
+          image_url: duel.player_deck.image_url,
+          totalGames: 0,
+          totalWins: 0,
+          firstGames: 0,
+          firstWins: 0,
+          secondGames: 0,
+          secondWins: 0
+        })
+      }
+
+      const stats = deckStatsMap.get(deckId)
+      stats.totalGames++
+      if (duel.result === 'win') stats.totalWins++
+      
+      if (duel.went_first) {
+        stats.firstGames++
+        if (duel.result === 'win') stats.firstWins++
+      } else {
+        stats.secondGames++
+        if (duel.result === 'win') stats.secondWins++
+      }
+    })
+
+    // Calculate win rates and sort by total games
+    const decksWithWinrates = Array.from(deckStatsMap.values())
+      .map(deck => ({
+        id: deck.id,
+        name: deck.name,
+        image_url: deck.image_url,
+        totalGames: deck.totalGames,
+        overallWinRate: deck.totalGames > 0 ? (deck.totalWins / deck.totalGames) * 100 : 0,
+        firstGames: deck.firstGames,
+        firstWinRate: deck.firstGames > 0 ? (deck.firstWins / deck.firstGames) * 100 : 0,
+        secondGames: deck.secondGames,
+        secondWinRate: deck.secondGames > 0 ? (deck.secondWins / deck.secondGames) * 100 : 0
+      }))
+      .sort((a, b) => b.totalGames - a.totalGames)
+
+    res.json({ decks: decksWithWinrates })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Get session-wide matchup matrix (all users)
+router.get('/:sessionId/session-matchups', authenticate, async (req, res) => {
+  try {
+    const sessionId = req.params.sessionId
+
+    // Get all duels in the session
+    const { data: duels } = await supabaseAdmin
+      .from('duels')
+      .select(`
+        result,
+        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url),
+        opponent_deck:decks!duels_opponent_deck_id_fkey(id, name, image_url)
+      `)
+      .eq('session_id', sessionId)
+
+    if (!duels || duels.length === 0) {
+      return res.json({ matchups: [], decks: [] })
+    }
+
+    // Get unified deck list
+    const deckCountMap = new Map()
+    duels.forEach(duel => {
+      const playerDeck = duel.player_deck
+      deckCountMap.set(playerDeck.id, {
+        deck: playerDeck,
+        count: (deckCountMap.get(playerDeck.id)?.count || 0) + 1
+      })
+      const opponentDeck = duel.opponent_deck
+      if (!deckCountMap.has(opponentDeck.id)) {
+        deckCountMap.set(opponentDeck.id, { deck: opponentDeck, count: 0 })
+      }
+    })
+
+    const unifiedDecks = Array.from(deckCountMap.values())
+      .sort((a, b) => b.count - a.count)
+      .map(entry => entry.deck)
+
+    // Calculate matchups
+    const matchupsMap = {}
+    duels.forEach(duel => {
+      const key = `${duel.player_deck.id}-${duel.opponent_deck.id}`
+      if (!matchupsMap[key]) {
+        matchupsMap[key] = {
+          deckAId: duel.player_deck.id,
+          deckBId: duel.opponent_deck.id,
+          wins: 0,
+          losses: 0
+        }
+      }
+      if (duel.result === 'win') {
+        matchupsMap[key].wins++
+      } else {
+        matchupsMap[key].losses++
+      }
+    })
+
     const matchups = Object.values(matchupsMap).map(m => ({
       ...m,
       winRate: Math.round((m.wins / (m.wins + m.losses)) * 100)

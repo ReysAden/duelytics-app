@@ -1,0 +1,150 @@
+.leaderboard-container {
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  display: flex;
+  flex-direction: column;
+  margin: 5px;
+}
+
+.leaderboard-wrapper {
+  flex: 1;
+  overflow: auto;
+}
+
+.leaderboard-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.leaderboard-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.loading,
+.no-data {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  padding: 40px;
+  text-align: center;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  font-size: 12px;
+}
+
+.leaderboard-table thead {
+  position: sticky;
+  top: 0;
+  background: rgba(15, 15, 20, 0.98);
+  z-index: 10;
+}
+
+.leaderboard-table th {
+  padding: 8px 6px;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.leaderboard-table td {
+  padding: 8px 6px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.leaderboard-table td:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.leaderboard-table td:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.leaderboard-table tbody tr {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.leaderboard-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.leaderboard-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.rank-col,
+.rank-cell {
+  width: 30px;
+  text-align: center;
+}
+
+.rank-cell {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.username-col {
+  min-width: 80px;
+}
+
+.username-cell {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.points-col,
+.points-cell {
+  min-width: 70px;
+}
+
+.points-cell {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.games-col,
+.games-cell {
+  width: 50px;
+  text-align: center;
+}
+
+.deck-col {
+  min-width: 100px;
+}
+
+.deck-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deck-thumb {
+  width: 24px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.deck-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.winrate-col,
+.winrate-cell {
+  width: 50px;
+  text-align: center;
+}
+
+.winrate-cell {
+  font-weight: 500;
+  font-size: 11px;
+}

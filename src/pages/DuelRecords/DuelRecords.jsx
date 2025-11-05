@@ -5,6 +5,9 @@ import { supabase } from '../../lib/supabase';
 import Submit from './tabs/Submit';
 import PersonalStats from './tabs/PersonalStats/PersonalStats';
 import DuelHistory from './tabs/DuelHistory/DuelHistory';
+import DeckWinrates from './tabs/DeckWinrates/DeckWinrates';
+import MatchupMatrix from './tabs/MatchupMatrix/MatchupMatrix';
+import Leaderboard from './tabs/Leaderboard/Leaderboard';
 
 const getTierColor = (tierName) => {
   if (!tierName) return '#ffffff';
@@ -192,6 +195,14 @@ function DuelRecords() {
           <PersonalStats sessionData={sessionData} />
         ) : activeTab === 'Duel History' ? (
           <DuelHistory sessionId={sessionId} onDuelDeleted={fetchUserStats} />
+        ) : activeTab === 'Deck Winrates' ? (
+          <div className="content-body">
+            <DeckWinrates />
+          </div>
+        ) : activeTab === 'Matchup Matrix' ? (
+          <MatchupMatrix />
+        ) : activeTab === 'Leaderboard' ? (
+          <Leaderboard />
         ) : (
           <>
             {activeTab !== 'Submit' && (
@@ -201,9 +212,6 @@ function DuelRecords() {
             )}
             <div className="content-body">
               {activeTab === 'Submit' && <Submit onDuelSubmitted={fetchUserStats} />}
-              {activeTab === 'Deck Winrates' && <div>Deck Winrates tab coming soon...</div>}
-              {activeTab === 'Matchup Matrix' && <div>Matchup Matrix tab coming soon...</div>}
-              {activeTab === 'Leaderboard' && <div>Leaderboard tab coming soon...</div>}
             </div>
           </>
         )}
