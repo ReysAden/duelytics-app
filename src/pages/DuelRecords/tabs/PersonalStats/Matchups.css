@@ -1,30 +1,38 @@
-/* View toggles */
-.view-toggle {
+.matchup-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.toggle-btn {
-  padding: 6px 16px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.7);
+.matchup-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.matchup-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  border-radius: 4px;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.6);
-  border-color: rgba(255, 255, 255, 0.3);
+.matchup-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.toggle-btn.active {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 1);
+.matchup-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+  border: 1px solid rgb(99, 102, 241);
 }
 
 /* Matrix view */

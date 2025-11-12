@@ -1,0 +1,65 @@
+{
+  "tabs": {
+    "submit": "送信",
+    "browse": "閲覧",
+    "personalStats": "個人統計",
+    "deckWinrates": "デッキ勝率",
+    "matchupMatrix": "対戦相性表",
+    "duelHistory": "デュエル履歴",
+    "leaderboard": "リーダーボード"
+  },
+  "submit": {
+    "yourDeck": "自分のデッキ",
+    "opponentDeck": "相手のデッキ",
+    "coinFlip": "コイントス",
+    "won": "勝ち",
+    "lost": "負け",
+    "turnOrder": "ターン順",
+    "first": "先攻",
+    "second": "後攻",
+    "matchResult": "試合結果",
+    "win": "勝利",
+    "loss": "敗北",
+    "ratingChange": "レート変動",
+    "submitting": "送信中...",
+    "searchYourDeck": "自分のデッキを検索...",
+    "searchOpponentDeck": "相手のデッキを検索..."
+  },
+  "browse": {
+    "title": "ユーザー統計を閲覧",
+    "subtitle": "このセッションの統計を表示するユーザーを選択",
+    "searchUser": "ユーザーを検索...",
+    "noParticipants": "このセッションに参加者がいません",
+    "backToBrowse": "← 閲覧に戻る",
+    "viewingStats": "統計を表示中:"
+  },
+  "personalStats": {
+    "overview": "概要",
+    "pointsTracker": "ポイント追跡",
+    "deckAnalysis": "デッキ分析",
+    "coinFlip": "コイントス",
+    "matchups": "対戦相性",
+    "allTime": "全期間"
+  },
+  "duelHistory": {
+    "date": "日付",
+    "yourDeck": "自分のデッキ",
+    "oppDeck": "相手デッキ",
+    "coin": "コイン",
+    "turn": "ターン",
+    "result": "結果",
+    "total": "合計",
+    "noDuels": "記録されたデュエルがありません"
+  },
+  "leaderboard": {
+    "rank": "順位",
+    "player": "プレイヤー",
+    "points": "ポイント",
+    "tier": "ティア",
+    "games": "試合数",
+    "topDeck": "トップデッキ",
+    "overall": "総合",
+    "first": "先攻",
+    "second": "後攻"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Duelytics"
+  },
+  "auth": {
+    "loginWithDiscord": "디스코드로 로그인",
+    "loggingIn": "로그인 중...",
+    "logout": "로그아웃"
+  },
+  "common": {
+    "win": "승",
+    "loss": "패",
+    "wins": "Wins",
+    "losses": "Losses",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "back": "Back",
+    "loading": "Loading...",
+    "noData": "No data yet",
+    "search": "Search",
+    "select": "Select",
+    "submit": "Submit",
+    "join": "Join",
+    "browse": "Browse"
+  },
+  "sidebar": {
+    "selectSession": "세션 선택",
+    "backToLobby": "로비로 돌아가기"
+  },
+  "sessionSelector": {
+    "activeSession": "진행중인 세션",
+    "archiveSession": "아카이브 세션",
+    "backgrounds": "배경",
+    "createNewSession": "Create New Session",
+    "manageSessions": "Manage Sessions",
+    "decks": "Decks",
+    "noActiveSessions": "No active sessions found",
+    "noArchivedSessions": "No archived sessions found",
+    "chooseSession": "Choose a session...",
+    "joining": "Joining..."
+  },
+  "stats": {
+    "points": "포인트",
+    "rank": "랭크",
+    "netWins": "Net Wins",
+    "record": "Record",
+    "unranked": "Unranked"
+  },
+  "gameMode": {
+    "duelist_cup": "듀얼리스트 컵",
+    "rated": "레이팅 듀얼",
+    "ladder": "랭킹 듀얼",
+    "casual": "Casual"
+  }
+}

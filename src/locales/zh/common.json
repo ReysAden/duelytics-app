@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Duelytics"
+  },
+  "auth": {
+    "loginWithDiscord": "使用Discord登录",
+    "loggingIn": "登录中…",
+    "logout": "登出"
+  },
+  "common": {
+    "win": "胜",
+    "loss": "负",
+    "wins": "Wins",
+    "losses": "Losses",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "back": "Back",
+    "loading": "Loading...",
+    "noData": "No data yet",
+    "search": "Search",
+    "select": "Select",
+    "submit": "Submit",
+    "join": "Join",
+    "browse": "Browse"
+  },
+  "sidebar": {
+    "selectSession": "选择一个赛事",
+    "backToLobby": "回到主页"
+  },
+  "sessionSelector": {
+    "activeSession": "可参加的赛事",
+    "archiveSession": "已结束的赛事档案",
+    "backgrounds": "背景",
+    "createNewSession": "Create New Session",
+    "manageSessions": "Manage Sessions",
+    "decks": "Decks",
+    "noActiveSessions": "No active sessions found",
+    "noArchivedSessions": "No archived sessions found",
+    "chooseSession": "Choose a session...",
+    "joining": "Joining..."
+  },
+  "stats": {
+    "points": "分数",
+    "rank": "排名",
+    "netWins": "Net Wins",
+    "record": "Record",
+    "unranked": "Unranked"
+  },
+  "gameMode": {
+    "duelist_cup": "决斗者杯",
+    "rated": "巅峰赛",
+    "ladder": "段位赛",
+    "casual": "Casual"
+  }
+}

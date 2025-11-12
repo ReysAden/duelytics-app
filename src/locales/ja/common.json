@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Duelytics"
+  },
+  "auth": {
+    "loginWithDiscord": "Discordでログイン",
+    "loggingIn": "ログイン中...",
+    "logout": "ログアウト"
+  },
+  "common": {
+    "win": "勝",
+    "loss": "敗",
+    "wins": "勝利",
+    "losses": "敗北",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "edit": "編集",
+    "create": "作成",
+    "view": "表示",
+    "back": "戻る",
+    "loading": "読み込み中...",
+    "noData": "データなし",
+    "search": "検索",
+    "select": "選択",
+    "submit": "送信",
+    "join": "参加",
+    "browse": "閲覧"
+  },
+  "sidebar": {
+    "selectSession": "セッションを選択",
+    "backToLobby": "ロビーに戻る"
+  },
+  "sessionSelector": {
+    "activeSession": "アクティブセッション",
+    "archiveSession": "アーカイブセッション",
+    "backgrounds": "背景",
+    "createNewSession": "新規セッション作成",
+    "manageSessions": "セッション管理",
+    "decks": "デッキ",
+    "noActiveSessions": "アクティブセッションがありません",
+    "noArchivedSessions": "アーカイブセッションがありません",
+    "chooseSession": "セッションを選択...",
+    "joining": "参加中..."
+  },
+  "stats": {
+    "points": "ポイント",
+    "rank": "ランク",
+    "netWins": "純勝利数",
+    "record": "戦績",
+    "unranked": "ランク外"
+  },
+  "gameMode": {
+    "duelist_cup": "デュエリストカップ",
+    "rated": "ランク戦",
+    "ladder": "ラダー",
+    "casual": "カジュアル"
+  }
+}

@@ -2,7 +2,7 @@
   "name": "duelytics-app",
   "version": "1.0.0",
   "description": "Yu-Gi-Oh! Master Duel Tournament Tracker",
-  "main": "dist-electron/main.js",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder",
@@ -15,9 +15,11 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
     "chart.js": "^4.5.1",
+    "i18next": "^25.6.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",
+    "react-i18next": "^16.2.4",
     "react-router-dom": "^6.17.0",
     "recharts": "^3.3.0"
   },

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import './DuelHistory.css';
 
-export default function DuelHistory({ sessionId, onDuelDeleted }) {
+export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = false }) {
+  const { t } = useTranslation('duelRecords');
   const [duels, setDuels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -85,20 +87,20 @@ export default function DuelHistory({ sessionId, onDuelDeleted }) {
           <thead>
             <tr>
               <th>#</th>
-              <th>Date</th>
-              <th>Your Deck</th>
-              <th>Opp Deck</th>
-              <th>Coin</th>
-              <th>Turn</th>
-              <th>Result</th>
-              <th>Total</th>
-              <th></th>
+              <th>{t('duelHistory.date')}</th>
+              <th>{t('duelHistory.yourDeck')}</th>
+              <th>{t('duelHistory.oppDeck')}</th>
+              <th>{t('duelHistory.coin')}</th>
+              <th>{t('duelHistory.turn')}</th>
+              <th>{t('duelHistory.result')}</th>
+              <th>{t('duelHistory.total')}</th>
+              {!isArchived && <th></th>}
             </tr>
           </thead>
           <tbody>
             {duels.length === 0 ? (
               <tr>
-                <td colSpan="9" className="no-duels">No duels recorded yet</td>
+                <td colSpan="9" className="no-duels">{t('duelHistory.noDuels')}</td>
               </tr>
             ) : (
               duels.map((duel, index) => (
@@ -113,14 +115,16 @@ export default function DuelHistory({ sessionId, onDuelDeleted }) {
                     {duel.result.toUpperCase()}
                   </td>
                   <td>{duel.rating_after || '—'}</td>
-                  <td>
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(duel.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  {!isArchived && (
+                    <td>
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDelete(duel.id)}
+                      >
+                        {t('common:common.delete')}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

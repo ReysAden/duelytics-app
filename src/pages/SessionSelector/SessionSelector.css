@@ -70,6 +70,10 @@
   padding-bottom: 20px;
 }
 
+.sidebar-language {
+  padding: 12px 20px;
+}
+
 .logout-btn {
   width: 100%;
   background: transparent;

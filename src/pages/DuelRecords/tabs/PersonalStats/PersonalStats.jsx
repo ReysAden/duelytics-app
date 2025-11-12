@@ -1,6 +1,7 @@
 import './PersonalStats.css';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import Overview from './Overview';
 import PointsTracker from './PointsTracker';
@@ -8,7 +9,8 @@ import DeckAnalysis from './DeckAnalysis';
 import CoinFlip from './CoinFlip';
 import Matchups from './Matchups';
 
-function PersonalStats({ sessionData }) {
+function PersonalStats({ sessionData, targetUserId = null }) {
+  const { t } = useTranslation('duelRecords');
   const { sessionId } = useParams();
   const [activeSubTab, setActiveSubTab] = useState('Overview');
   const [dateFilter, setDateFilter] = useState('all');
@@ -18,14 +20,17 @@ function PersonalStats({ sessionData }) {
 
   useEffect(() => {
     fetchAvailableDates();
-  }, [sessionId]);
+  }, [sessionId, targetUserId]);
 
   const fetchAvailableDates = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/dates`, {
+      const url = targetUserId 
+        ? `http://localhost:3001/api/sessions/${sessionId}/dates?userId=${targetUserId}`
+        : `http://localhost:3001/api/sessions/${sessionId}/dates`;
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       
@@ -46,33 +51,33 @@ function PersonalStats({ sessionData }) {
             className={`subtab-btn ${activeSubTab === 'Overview' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('Overview')}
           >
-            Overview
+            {t('personalStats.overview')}
           </button>
           {showPointsTracker && (
             <button
               className={`subtab-btn ${activeSubTab === 'Points Tracker' ? 'active' : ''}`}
               onClick={() => setActiveSubTab('Points Tracker')}
             >
-              Points Tracker
+              {t('personalStats.pointsTracker')}
             </button>
           )}
           <button
             className={`subtab-btn ${activeSubTab === 'Deck Analysis' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('Deck Analysis')}
           >
-            Deck Analysis
+            {t('personalStats.deckAnalysis')}
           </button>
           <button
             className={`subtab-btn ${activeSubTab === 'Coin Flip' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('Coin Flip')}
           >
-            Coin Flip
+            {t('personalStats.coinFlip')}
           </button>
           <button
             className={`subtab-btn ${activeSubTab === 'Matchups' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('Matchups')}
           >
-            Matchups
+            {t('personalStats.matchups')}
           </button>
         </nav>
         <select 
@@ -80,7 +85,7 @@ function PersonalStats({ sessionData }) {
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
         >
-          <option value="all">All Time</option>
+          <option value="all">{t('personalStats.allTime')}</option>
           {availableDates.map((date) => (
             <option key={date} value={date}>{date}</option>
           ))}
@@ -88,11 +93,11 @@ function PersonalStats({ sessionData }) {
       </header>
 
       <div className="subtab-content">
-        {activeSubTab === 'Overview' && <Overview sessionId={sessionId} dateFilter={dateFilter} />}
-        {activeSubTab === 'Points Tracker' && <PointsTracker sessionId={sessionId} dateFilter={dateFilter} />}
-        {activeSubTab === 'Deck Analysis' && <DeckAnalysis sessionId={sessionId} dateFilter={dateFilter} />}
-        {activeSubTab === 'Coin Flip' && <CoinFlip sessionId={sessionId} dateFilter={dateFilter} />}
-        {activeSubTab === 'Matchups' && <Matchups sessionId={sessionId} dateFilter={dateFilter} />}
+        {activeSubTab === 'Overview' && <Overview sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}
+        {activeSubTab === 'Points Tracker' && <PointsTracker sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}
+        {activeSubTab === 'Deck Analysis' && <DeckAnalysis sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}
+        {activeSubTab === 'Coin Flip' && <CoinFlip sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}
+        {activeSubTab === 'Matchups' && <Matchups sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}
       </div>
     </>
   );

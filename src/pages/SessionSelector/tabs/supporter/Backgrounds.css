@@ -33,6 +33,7 @@
 }
 
 .background-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -87,4 +88,36 @@
   border-color: rgba(76, 175, 80, 0.5);
   color: #66bb6a;
   cursor: default;
+}
+
+.delete-background-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(244, 67, 54, 0.8);
+  border: 1px solid rgba(244, 67, 54, 0.6);
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1;
+  opacity: 0;
+}
+
+.background-item:hover .delete-background-btn {
+  opacity: 1;
+}
+
+.delete-background-btn:hover {
+  background: rgba(244, 67, 54, 1);
+  border-color: rgba(244, 67, 54, 0.8);
+  transform: scale(1.05);
 }

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Duel Submission</title>
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+  <div class="header">
+    <div class="drag-area" id="dragHandle"></div>
+    <button id="minimizeBtn" class="header-btn">−</button>
+    <button id="closeBtn" class="header-btn">✕</button>
+  </div>
+  <form id="duelForm">
+    <div class="form-row">
+      <div class="form-field">
+        <label>Your Deck *</label>
+        <input type="text" id="yourDeck" placeholder="Search..." autocomplete="off">
+        <div id="yourDeckDropdown" class="dropdown"></div>
+      </div>
+      <div class="form-field">
+        <label>Opponent's Deck *</label>
+        <input type="text" id="oppDeck" placeholder="Search..." autocomplete="off">
+        <div id="oppDeckDropdown" class="dropdown"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Coin Flip *</label>
+        <div class="button-group">
+          <button type="button" class="choice-btn" data-field="coinFlip" data-value="win">Win</button>
+          <button type="button" class="choice-btn" data-field="coinFlip" data-value="loss">Loss</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Turn Order *</label>
+        <div class="button-group">
+          <button type="button" class="choice-btn" data-field="turnOrder" data-value="first">First</button>
+          <button type="button" class="choice-btn" data-field="turnOrder" data-value="second">Second</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label>Match Result *</label>
+      <div class="button-group">
+        <button type="button" class="result-btn win" data-field="matchResult" data-value="win">Win</button>
+        <button type="button" class="result-btn loss" data-field="matchResult" data-value="loss">Loss</button>
+      </div>
+    </div>
+
+    <div id="ratingField" class="form-field" style="display: none;">
+      <label>Rating Change</label>
+      <input type="number" id="ratingChange" placeholder="Optional" step="0.01">
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn" disabled>Submit</button>
+  </form>
+
+  <script src="overlay.js"></script>
+</body>
+</html>

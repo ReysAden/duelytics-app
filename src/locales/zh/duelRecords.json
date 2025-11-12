@@ -1,0 +1,65 @@
+{
+  "tabs": {
+    "submit": "提交",
+    "browse": "浏览",
+    "personalStats": "个人数据",
+    "deckWinrates": "卡组胜率",
+    "matchupMatrix": "卡组优劣关系模型",
+    "duelHistory": "决斗历史",
+    "leaderboard": "排行榜"
+  },
+  "submit": {
+    "yourDeck": "你的卡组",
+    "opponentDeck": "对手的卡组",
+    "coinFlip": "硬币胜负",
+    "won": "胜",
+    "lost": "负",
+    "turnOrder": "先后攻",
+    "first": "先攻",
+    "second": "后攻",
+    "matchResult": "对战结果",
+    "win": "胜",
+    "loss": "负",
+    "ratingChange": "积分变化",
+    "submitting": "正在提交…",
+    "searchYourDeck": "寻找你的卡组中…",
+    "searchOpponentDeck": "寻找对手的卡组中…"
+  },
+  "browse": {
+    "title": "浏览用户数据",
+    "subtitle": "选择一个用户以查看他在此赛事中的数据",
+    "searchUser": "搜索用户中…",
+    "noParticipants": "没有在此赛事中找到参加者",
+    "backToBrowse": "回到浏览界面",
+    "viewingStats": "查看统计信息："
+  },
+  "personalStats": {
+    "overview": "概览",
+    "pointsTracker": "分数追踪",
+    "deckAnalysis": "卡组分析",
+    "coinFlip": "硬币胜负",
+    "matchups": "对战卡组统计",
+    "allTime": "所有时间"
+  },
+  "duelHistory": {
+    "date": "日期",
+    "yourDeck": "你的卡组",
+    "oppDeck": "对手的卡组",
+    "coin": "硬币",
+    "turn": "回合数",
+    "result": "结果",
+    "total": "总和",
+    "noDuels": "暂时无决斗记录"
+  },
+  "leaderboard": {
+    "rank": "排名",
+    "player": "玩家",
+    "points": "分数",
+    "tier": "梯度",
+    "games": "对局数",
+    "topDeck": "顶级卡组",
+    "overall": "总体数据",
+    "first": "先攻",
+    "second": "后攻"
+  }
+}

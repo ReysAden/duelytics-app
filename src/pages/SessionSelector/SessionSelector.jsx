@@ -1,14 +1,17 @@
 import './SessionSelector.css';
 import { supabase } from '../../lib/supabase';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import CreateNewSession from './tabs/admin/CreateNewSession';
 import ActiveSession from './tabs/user/ActiveSession';
 import ArchiveSession from './tabs/user/ArchiveSession';
 import ManageSessions from './tabs/admin/ManageSessions';
 import Decks from './tabs/admin/Decks';
 import Backgrounds from './tabs/supporter/Backgrounds';
+import LanguageSelector from '../../components/LanguageSelector';
 
 function SessionSelector({ user, userRoles }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('Active Session');
 
   useEffect(() => {
@@ -53,8 +56,8 @@ function SessionSelector({ user, userRoles }) {
   return (
     <>
       <aside className="sidebar">
-        <h1 className="sidebar-title">Duelytics</h1>
-        <p className="sidebar-subtitle">Select a session</p>
+        <h1 className="sidebar-title">{t('app.name')}</h1>
+        <p className="sidebar-subtitle">{t('sidebar.selectSession')}</p>
         
         <div className="sidebar-divider"></div>
         
@@ -63,20 +66,20 @@ function SessionSelector({ user, userRoles }) {
             className={`sidebar-item ${activeTab === 'Active Session' ? 'active' : ''}`}
             onClick={() => setActiveTab('Active Session')}
           >
-            Active Session
+            {t('sessionSelector.activeSession')}
           </button>
           <button 
             className={`sidebar-item ${activeTab === 'Archive Session' ? 'active' : ''}`}
             onClick={() => setActiveTab('Archive Session')}
           >
-            Archive Session
+            {t('sessionSelector.archiveSession')}
           </button>
           {userRoles.isSupporter && (
             <button 
               className={`sidebar-item ${activeTab === 'Backgrounds' ? 'active' : ''}`}
               onClick={() => setActiveTab('Backgrounds')}
             >
-              Backgrounds
+              {t('sessionSelector.backgrounds')}
             </button>
           )}
         </nav>
@@ -89,19 +92,19 @@ function SessionSelector({ user, userRoles }) {
                 className={`sidebar-item ${activeTab === 'Create New Session' ? 'active' : ''}`}
                 onClick={() => setActiveTab('Create New Session')}
               >
-                Create New Session
+                {t('sessionSelector.createNewSession')}
               </button>
               <button 
                 className={`sidebar-item ${activeTab === 'Manage Sessions' ? 'active' : ''}`}
                 onClick={() => setActiveTab('Manage Sessions')}
               >
-                Manage Sessions
+                {t('sessionSelector.manageSessions')}
               </button>
               <button 
                 className={`sidebar-item ${activeTab === 'Decks' ? 'active' : ''}`}
                 onClick={() => setActiveTab('Decks')}
               >
-                Decks
+                {t('sessionSelector.decks')}
               </button>
             </nav>
           </>
@@ -109,16 +112,16 @@ function SessionSelector({ user, userRoles }) {
         
         <div className="sidebar-footer">
           <div className="sidebar-divider"></div>
+          <div className="sidebar-language">
+            <LanguageSelector />
+          </div>
           <button className="logout-btn" onClick={handleLogout}>
-            Log Out
+            {t('auth.logout')}
           </button>
         </div>
       </aside>
       
       <main className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">{activeTab}</h1>
-        </header>
         <div className="content-body">
           {activeTab === 'Active Session' && <ActiveSession />}
           {activeTab === 'Archive Session' && <ArchiveSession />}

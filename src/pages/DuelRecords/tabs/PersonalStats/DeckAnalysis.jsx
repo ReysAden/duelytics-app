@@ -2,20 +2,25 @@ import './DeckAnalysis.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
 
-function DeckAnalysis({ sessionId, dateFilter }) {
+function DeckAnalysis({ sessionId, dateFilter, targetUserId = null }) {
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDeckStats();
-  }, [sessionId, dateFilter]);
+  }, [sessionId, dateFilter, targetUserId]);
 
   const fetchDeckStats = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const url = `http://localhost:3001/api/sessions/${sessionId}/deck-analysis${dateFilter !== 'all' ? `?days=${dateFilter}` : ''}`;
+      let url = `http://localhost:3001/api/sessions/${sessionId}/deck-analysis`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

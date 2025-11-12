@@ -2,7 +2,7 @@ import './CoinFlip.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
 
-function CoinFlip({ sessionId, dateFilter }) {
+function CoinFlip({ sessionId, dateFilter, targetUserId = null }) {
   const [stats, setStats] = useState({
     totalFlips: 0,
     flipsWon: 0,
@@ -23,14 +23,19 @@ function CoinFlip({ sessionId, dateFilter }) {
 
   useEffect(() => {
     fetchCoinFlipStats();
-  }, [sessionId, dateFilter]);
+  }, [sessionId, dateFilter, targetUserId]);
 
   const fetchCoinFlipStats = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const url = `http://localhost:3001/api/sessions/${sessionId}/coin-flip${dateFilter !== 'all' ? `?days=${dateFilter}` : ''}`;
+      let url = `http://localhost:3001/api/sessions/${sessionId}/coin-flip`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

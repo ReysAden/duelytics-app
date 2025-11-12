@@ -1,8 +1,10 @@
 import './DuelRecords.css';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import Submit from './tabs/Submit';
+import Browse from './tabs/Browse';
 import PersonalStats from './tabs/PersonalStats/PersonalStats';
 import DuelHistory from './tabs/DuelHistory/DuelHistory';
 import DeckWinrates from './tabs/DeckWinrates/DeckWinrates';
@@ -23,9 +25,10 @@ const getTierColor = (tierName) => {
 };
 
 function DuelRecords() {
+  const { t } = useTranslation(['common', 'duelRecords']);
   const { sessionId } = useParams();
-  const [activeTab, setActiveTab] = useState('Submit');
   const [sessionData, setSessionData] = useState(null);
+  const [activeTab, setActiveTab] = useState(sessionData?.status === 'archived' ? 'Browse' : 'Submit');
   const [userStats, setUserStats] = useState({
     points: 0,
     wins: 0,
@@ -49,10 +52,16 @@ function DuelRecords() {
       const data = await response.json();
       
       if (data.session) {
-        setSessionData({
+        const session = {
           name: data.session.name,
-          gameMode: data.session.game_mode
-        });
+          gameMode: data.session.game_mode,
+          status: data.session.status
+        };
+        setSessionData(session);
+        // Set initial tab based on session status
+        if (data.session.status === 'archived') {
+          setActiveTab('Browse');
+        }
       }
     } catch (err) {
       console.error('Failed to load session:', err);
@@ -101,7 +110,7 @@ function DuelRecords() {
   return (
     <>
       <aside className="sidebar">
-        <h1 className="sidebar-title">Duelytics</h1>
+        <h1 className="sidebar-title">{t('common:app.name')}</h1>
         <div className="sidebar-divider"></div>
         <p className="sidebar-session-name">
           {sessionData?.name || 'Session Name'}
@@ -111,19 +120,19 @@ function DuelRecords() {
           {sessionData?.gameMode === 'ladder' ? (
             <>
               <div className="stat-item">
-                <span className="stat-label">Rank</span>
+                <span className="stat-label">{t('common:stats.rank')}</span>
                 <span className="stat-value" style={{ color: getTierColor(userStats.tier) }}>
-                  {userStats.tier || 'Unranked'}
+                  {userStats.tier || t('common:stats.unranked')}
                 </span>
               </div>
               <div className="stat-item">
-                <span className="stat-label">Net Wins</span>
+                <span className="stat-label">{t('common:stats.netWins')}</span>
                 <span className="stat-value">{userStats.netWins}/{userStats.winsRequired}</span>
               </div>
             </>
           ) : (
             <div className="stat-item">
-              <span className="stat-label">Points</span>
+              <span className="stat-label">{t('common:stats.points')}</span>
               <span className="stat-value">
                 {sessionData?.gameMode === 'rated' 
                   ? userStats.points.toFixed(2) 
@@ -132,11 +141,11 @@ function DuelRecords() {
             </div>
           )}
           <div className="stat-item">
-            <span className="stat-label">Record</span>
+            <span className="stat-label">{t('common:stats.record')}</span>
             <span className="stat-value">
-              <span className="record-win">{userStats.wins}W</span>
+              <span className="record-win">{userStats.wins}{t('common:common.win')}</span>
               <span> - </span>
-              <span className="record-loss">{userStats.losses}L</span>
+              <span className="record-loss">{userStats.losses}{t('common:common.loss')}</span>
             </span>
           </div>
         </div>
@@ -144,48 +153,57 @@ function DuelRecords() {
         <div className="sidebar-divider"></div>
         
         <nav className="sidebar-nav">
-          <button 
-            className={`sidebar-item ${activeTab === 'Submit' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Submit')}
-          >
-            Submit
-          </button>
+          {sessionData?.status !== 'archived' ? (
+            <button 
+              className={`sidebar-item ${activeTab === 'Submit' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Submit')}
+            >
+              {t('duelRecords:tabs.submit')}
+            </button>
+          ) : (
+            <button 
+              className={`sidebar-item ${activeTab === 'Browse' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Browse')}
+            >
+              {t('duelRecords:tabs.browse')}
+            </button>
+          )}
           <button 
             className={`sidebar-item ${activeTab === 'Personal Stats' ? 'active' : ''}`}
             onClick={() => setActiveTab('Personal Stats')}
           >
-            Personal Stats
+            {t('duelRecords:tabs.personalStats')}
           </button>
           <button 
             className={`sidebar-item ${activeTab === 'Deck Winrates' ? 'active' : ''}`}
             onClick={() => setActiveTab('Deck Winrates')}
           >
-            Deck Winrates
+            {t('duelRecords:tabs.deckWinrates')}
           </button>
           <button 
             className={`sidebar-item ${activeTab === 'Matchup Matrix' ? 'active' : ''}`}
             onClick={() => setActiveTab('Matchup Matrix')}
           >
-            Matchup Matrix
+            {t('duelRecords:tabs.matchupMatrix')}
           </button>
           <button 
             className={`sidebar-item ${activeTab === 'Duel History' ? 'active' : ''}`}
             onClick={() => setActiveTab('Duel History')}
           >
-            Duel History
+            {t('duelRecords:tabs.duelHistory')}
           </button>
           <button 
             className={`sidebar-item ${activeTab === 'Leaderboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('Leaderboard')}
           >
-            Leaderboard
+            {t('duelRecords:tabs.leaderboard')}
           </button>
         </nav>
         
         <div className="sidebar-footer">
           <div className="sidebar-divider"></div>
           <button className="back-btn" onClick={handleBackToLobby}>
-            Back to Lobby
+            {t('common:sidebar.backToLobby')}
           </button>
         </div>
       </aside>
@@ -194,7 +212,7 @@ function DuelRecords() {
         {activeTab === 'Personal Stats' ? (
           <PersonalStats sessionData={sessionData} />
         ) : activeTab === 'Duel History' ? (
-          <DuelHistory sessionId={sessionId} onDuelDeleted={fetchUserStats} />
+          <DuelHistory sessionId={sessionId} onDuelDeleted={fetchUserStats} isArchived={sessionData?.status === 'archived'} />
         ) : activeTab === 'Deck Winrates' ? (
           <div className="content-body">
             <DeckWinrates />
@@ -203,9 +221,13 @@ function DuelRecords() {
           <MatchupMatrix />
         ) : activeTab === 'Leaderboard' ? (
           <Leaderboard />
+        ) : activeTab === 'Browse' ? (
+          <div className="content-body">
+            <Browse sessionData={sessionData} />
+          </div>
         ) : (
           <>
-            {activeTab !== 'Submit' && (
+            {activeTab !== 'Submit' && activeTab !== 'Browse' && (
               <header className="content-header">
                 <h1 className="content-title">{activeTab}</h1>
               </header>

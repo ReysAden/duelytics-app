@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Duelytics"
+  },
+  "auth": {
+    "loginWithDiscord": "Login with Discord",
+    "loggingIn": "Logging in...",
+    "logout": "Log Out"
+  },
+  "common": {
+    "win": "W",
+    "loss": "L",
+    "wins": "Wins",
+    "losses": "Losses",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "back": "Back",
+    "loading": "Loading...",
+    "noData": "No data yet",
+    "search": "Search",
+    "select": "Select",
+    "submit": "Submit",
+    "join": "Join",
+    "browse": "Browse"
+  },
+  "sidebar": {
+    "selectSession": "Select a session",
+    "backToLobby": "Back to Lobby"
+  },
+  "sessionSelector": {
+    "activeSession": "Active Session",
+    "archiveSession": "Archive Session",
+    "backgrounds": "Backgrounds",
+    "createNewSession": "Create New Session",
+    "manageSessions": "Manage Sessions",
+    "decks": "Decks",
+    "noActiveSessions": "No active sessions found",
+    "noArchivedSessions": "No archived sessions found",
+    "chooseSession": "Choose a session...",
+    "joining": "Joining..."
+  },
+  "stats": {
+    "points": "Points",
+    "rank": "Rank",
+    "netWins": "Net Wins",
+    "record": "Record",
+    "unranked": "Unranked"
+  },
+  "gameMode": {
+    "duelist_cup": "Duelist Cup",
+    "rated": "Rated",
+    "ladder": "Ladder",
+    "casual": "Casual"
+  }
+}

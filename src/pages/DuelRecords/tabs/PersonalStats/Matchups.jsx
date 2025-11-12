@@ -10,7 +10,7 @@ const COLORS = [
 const PIE_SIZE = 300;
 const PIE_RADIUS = 60; // % from center to place images
 
-function Matchups({ sessionId, dateFilter }) {
+function Matchups({ sessionId, dateFilter, targetUserId = null }) {
   const [matchups, setMatchups] = useState([]);
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,14 +19,19 @@ function Matchups({ sessionId, dateFilter }) {
 
   useEffect(() => {
     fetchMatchups();
-  }, [sessionId, dateFilter]);
+  }, [sessionId, dateFilter, targetUserId]);
 
   const fetchMatchups = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const url = `http://localhost:3001/api/sessions/${sessionId}/matchups${dateFilter !== 'all' ? `?days=${dateFilter}` : ''}`;
+      let url = `http://localhost:3001/api/sessions/${sessionId}/matchups`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
@@ -100,20 +105,22 @@ function Matchups({ sessionId, dateFilter }) {
 
   return (
     <>
-      <div className="view-toggle">
-        <button 
-          className={`toggle-btn ${viewMode === 'matrix' ? 'active' : ''}`}
-          onClick={() => setViewMode('matrix')}
-        >
-          Matrix View
-        </button>
-        <button 
-          className={`toggle-btn ${viewMode === 'most-faced' ? 'active' : ''}`}
-          onClick={() => setViewMode('most-faced')}
-        >
-          Most Faced
-        </button>
-      </div>
+      <header className="matchup-header">
+        <nav className="matchup-nav">
+          <button 
+            className={`matchup-btn ${viewMode === 'matrix' ? 'active' : ''}`}
+            onClick={() => setViewMode('matrix')}
+          >
+            Matrix View
+          </button>
+          <button 
+            className={`matchup-btn ${viewMode === 'most-faced' ? 'active' : ''}`}
+            onClick={() => setViewMode('most-faced')}
+          >
+            Most Faced
+          </button>
+        </nav>
+      </header>
 
       {viewMode === 'matrix' ? (
         <div className="matchups-container">

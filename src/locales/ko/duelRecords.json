@@ -1,0 +1,65 @@
+{
+  "tabs": {
+    "submit": "제출",
+    "browse": "검색",
+    "personalStats": "개인 전적",
+    "deckWinrates": "덱 승률",
+    "matchupMatrix": "매치업별 상성표",
+    "duelHistory": "듀얼 기록",
+    "leaderboard": "리더보드"
+  },
+  "submit": {
+    "yourDeck": "당신의 덱",
+    "opponentDeck": "대전 상대의 덱",
+    "coinFlip": "코인토스",
+    "won": "승",
+    "lost": "패",
+    "turnOrder": "선/후공",
+    "first": "선공",
+    "second": "후공",
+    "matchResult": "대전 결과",
+    "win": "승리",
+    "loss": "패배",
+    "ratingChange": "레이팅 변화",
+    "submitting": "제출 중...",
+    "searchYourDeck": "자신의 덱 검색",
+    "searchOpponentDeck": "대전 상대의 덱 검색"
+  },
+  "browse": {
+    "title": "플레이어 전적 검색",
+    "subtitle": "세션에서 선택해 플레이어 전적 검색",
+    "searchUser": "플레이어 검색",
+    "noParticipants": "세션에 참가자가 없습니다.",
+    "backToBrowse": "검색으로 돌아가기",
+    "viewingStats": "다른 사람의 전적 보기"
+  },
+  "personalStats": {
+    "overview": "개요",
+    "pointsTracker": "점수 기록",
+    "deckAnalysis": "덱 분석",
+    "coinFlip": "코인토스",
+    "matchups": "매치업",
+    "allTime": "모든 기간"
+  },
+  "duelHistory": {
+    "date": "날짜",
+    "yourDeck": "나의 덱",
+    "oppDeck": "상대방의 덱",
+    "coin": "코인",
+    "turn": "턴",
+    "result": "결과",
+    "total": "합계",
+    "noDuels": "듀얼 기록이 없습니다."
+  },
+  "leaderboard": {
+    "rank": "랭크",
+    "player": "플레이어",
+    "points": "포인트",
+    "tier": "티어",
+    "games": "게임",
+    "topDeck": "탑 덱",
+    "overall": "전체",
+    "first": "선공",
+    "second": "후공"
+  }
+}

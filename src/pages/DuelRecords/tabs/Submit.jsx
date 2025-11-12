@@ -34,6 +34,27 @@ function Submit({ onDuelSubmitted }) {
     fetchDecks();
   }, [sessionId]);
 
+  // Close overlay when leaving Submit page
+  useEffect(() => {
+    return () => {
+      if (window.electronAPI?.overlay?.close) {
+        window.electronAPI.overlay.close();
+      }
+    };
+  }, []);
+
+  // Listen for duel submissions from overlay
+  useEffect(() => {
+    const handleDuelSubmitted = (submittedSessionId) => {
+      if (submittedSessionId === sessionId) {
+        // Refresh the duel list
+        if (onDuelSubmitted) onDuelSubmitted();
+      }
+    };
+
+    window.electronAPI?.onDuelSubmitted?.(handleDuelSubmitted);
+  }, [sessionId, onDuelSubmitted]);
+
   // Load last selected deck for this session
   useEffect(() => {
     if (decks.length > 0 && sessionId) {
@@ -140,6 +161,43 @@ function Submit({ onDuelSubmitted }) {
   };
 
   const showRatingChange = sessionData?.game_mode === 'duelist_cup' || sessionData?.game_mode === 'rated';
+
+  const handleOpenOverlay = async () => {
+    if (window.electronAPI?.overlay?.open) {
+      const { data: { session } } = await supabase.auth.getSession();
+      await window.electronAPI.overlay.open({
+        sessionId,
+        authToken: session?.access_token
+      });
+    }
+  };
+
+  const handleDeleteLastDuel = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('You must be logged in');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3001/api/duels/last?sessionId=${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        alert('Last duel deleted');
+        if (onDuelSubmitted) onDuelSubmitted();
+      } else {
+        alert('Failed to delete duel');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('An error occurred');
+    }
+  };
 
   return (
     <div className="submit-container">
@@ -303,14 +361,32 @@ function Submit({ onDuelSubmitted }) {
           </div>
         )}
 
-        <button
-          type="button"
-          className={`submit-btn ${!isFormValid() || isSubmitting ? 'disabled' : ''}`}
-          onClick={handleSubmit}
-          disabled={!isFormValid() || isSubmitting}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            type="button"
+            className={`submit-btn ${!isFormValid() || isSubmitting ? 'disabled' : ''}`}
+            onClick={handleSubmit}
+            disabled={!isFormValid() || isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
+          <button
+            type="button"
+            className="submit-btn"
+            onClick={handleOpenOverlay}
+            style={{ flex: '0 0 auto' }}
+          >
+            Overlay
+          </button>
+          <button
+            type="button"
+            className="submit-btn"
+            onClick={handleDeleteLastDuel}
+            style={{ flex: '0 0 auto', background: 'rgb(239, 68, 68)' }}
+          >
+            Delete Last
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ ChartJS.register(
   Filler
 );
 
-function PointsTracker({ sessionId, dateFilter }) {
+function PointsTracker({ sessionId, dateFilter, targetUserId = null }) {
   const [data, setData] = useState({
     progression: [],
     stats: {
@@ -40,14 +40,19 @@ function PointsTracker({ sessionId, dateFilter }) {
 
   useEffect(() => {
     fetchPointsData();
-  }, [sessionId, dateFilter]);
+  }, [sessionId, dateFilter, targetUserId]);
 
   const fetchPointsData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const url = `http://localhost:3001/api/sessions/${sessionId}/points-tracker${dateFilter !== 'all' ? `?days=${dateFilter}` : ''}`;
+      let url = `http://localhost:3001/api/sessions/${sessionId}/points-tracker`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

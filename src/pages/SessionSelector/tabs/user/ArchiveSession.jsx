@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ArchiveSession.css';
 
 function ArchiveSession() {
@@ -6,6 +7,7 @@ function ArchiveSession() {
   const [selectedSession, setSelectedSession] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchArchivedSessions();
@@ -24,6 +26,11 @@ function ArchiveSession() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewSession = () => {
+    if (!selectedSession) return;
+    navigate(`/session/${selectedSession}`);
   };
 
   if (loading) {
@@ -49,6 +56,14 @@ function ArchiveSession() {
           ))}
         </select>
       </div>
+
+      <button
+        className="view-btn"
+        onClick={handleViewSession}
+        disabled={!selectedSession}
+      >
+        View
+      </button>
 
       {sessions.length === 0 && !loading && (
         <p style={{ color: 'rgba(255, 255, 255, 0.5)', marginTop: '20px' }}>

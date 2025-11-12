@@ -1,0 +1,65 @@
+{
+  "tabs": {
+    "submit": "Submit",
+    "browse": "Browse",
+    "personalStats": "Personal Stats",
+    "deckWinrates": "Deck Winrates",
+    "matchupMatrix": "Matchup Matrix",
+    "duelHistory": "Duel History",
+    "leaderboard": "Leaderboard"
+  },
+  "submit": {
+    "yourDeck": "Your Deck",
+    "opponentDeck": "Opponent's Deck",
+    "coinFlip": "Coin Flip",
+    "won": "Won",
+    "lost": "Lost",
+    "turnOrder": "Turn Order",
+    "first": "First",
+    "second": "Second",
+    "matchResult": "Match Result",
+    "win": "Win",
+    "loss": "Loss",
+    "ratingChange": "Rating Change",
+    "submitting": "Submitting...",
+    "searchYourDeck": "Search your deck...",
+    "searchOpponentDeck": "Search opponent's deck..."
+  },
+  "browse": {
+    "title": "Browse User Stats",
+    "subtitle": "Select a user to view their stats from this session",
+    "searchUser": "Search for a user...",
+    "noParticipants": "No participants found in this session",
+    "backToBrowse": "← Back to Browse",
+    "viewingStats": "Viewing stats for:"
+  },
+  "personalStats": {
+    "overview": "Overview",
+    "pointsTracker": "Points Tracker",
+    "deckAnalysis": "Deck Analysis",
+    "coinFlip": "Coin Flip",
+    "matchups": "Matchups",
+    "allTime": "All Time"
+  },
+  "duelHistory": {
+    "date": "Date",
+    "yourDeck": "Your Deck",
+    "oppDeck": "Opp Deck",
+    "coin": "Coin",
+    "turn": "Turn",
+    "result": "Result",
+    "total": "Total",
+    "noDuels": "No duels recorded yet"
+  },
+  "leaderboard": {
+    "rank": "Rank",
+    "player": "Player",
+    "points": "Points",
+    "tier": "Tier",
+    "games": "Games",
+    "topDeck": "Top Deck",
+    "overall": "Overall",
+    "first": "1st",
+    "second": "2nd"
+  }
+}

@@ -253,7 +253,7 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
 // Get overview stats
 router.get('/:sessionId/overview', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
     const days = req.query.days
 
@@ -361,7 +361,7 @@ router.get('/:sessionId/overview', authenticate, async (req, res) => {
 // Get deck analysis stats
 router.get('/:sessionId/deck-analysis', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
     const days = req.query.days
 
@@ -424,7 +424,7 @@ router.get('/:sessionId/deck-analysis', authenticate, async (req, res) => {
 // Get available dates for filtering
 router.get('/:sessionId/dates', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
 
     const { data: duels } = await supabaseAdmin
@@ -455,7 +455,7 @@ router.get('/:sessionId/dates', authenticate, async (req, res) => {
 // Get coin flip stats
 router.get('/:sessionId/coin-flip', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
     const days = req.query.days
 
@@ -544,7 +544,7 @@ router.get('/:sessionId/coin-flip', authenticate, async (req, res) => {
 // Get points tracker data
 router.get('/:sessionId/points-tracker', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
     const days = req.query.days
 
@@ -698,7 +698,7 @@ router.get('/:sessionId/duels', authenticate, async (req, res) => {
 // Get matchup matrix data
 router.get('/:sessionId/matchups', authenticate, async (req, res) => {
   try {
-    const userId = req.user.discord_id
+    const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
     const days = req.query.days
 
@@ -919,6 +919,47 @@ router.get('/:sessionId/session-matchups', authenticate, async (req, res) => {
       matchups,
       decks: unifiedDecks
     })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Get session participants
+router.get('/:sessionId/participants', authenticate, async (req, res) => {
+  try {
+    const sessionId = req.params.sessionId
+
+    // Get all users who have duels in this session
+    const { data: duels } = await supabaseAdmin
+      .from('duels')
+      .select('user_id')
+      .eq('session_id', sessionId)
+
+    if (!duels || duels.length === 0) {
+      return res.json({ participants: [] })
+    }
+
+    // Get unique user IDs
+    const uniqueUserIds = [...new Set(duels.map(d => d.user_id))]
+
+    // Fetch usernames for these user IDs
+    const { data: users } = await supabaseAdmin
+      .from('users')
+      .select('discord_id, username')
+      .in('discord_id', uniqueUserIds)
+
+    if (!users) {
+      return res.json({ participants: [] })
+    }
+
+    // Format response
+    const participants = users.map(user => ({
+      user_id: user.discord_id,
+      username: user.username
+    }))
+    .sort((a, b) => a.username.localeCompare(b.username))
+
+    res.json({ participants })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

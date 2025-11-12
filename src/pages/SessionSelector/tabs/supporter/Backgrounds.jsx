@@ -164,6 +164,34 @@ function Backgrounds({ user }) {
     document.body.style.backgroundImage = `url('${url}')`;
   };
 
+  const handleDeleteBackground = async (backgroundId, backgroundUrl) => {
+    if (!confirm('Are you sure you want to delete this background?')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`http://localhost:3001/api/backgrounds/${backgroundId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        // If the deleted background was active, clear it
+        if (selectedBackground === backgroundUrl) {
+          setSelectedBackground(null);
+          document.body.style.backgroundImage = '';
+          localStorage.removeItem('user_background');
+        }
+        fetchBackgrounds();
+      }
+    } catch (error) {
+      setErrorMessage('Failed to delete background');
+    }
+  };
+
   return (
     <div className="backgrounds-tab">
       <form onSubmit={handleSubmit} className="background-form">
@@ -206,6 +234,13 @@ function Backgrounds({ user }) {
         <div className="background-list">
           {backgrounds.map((bg) => (
             <div key={bg.id} className="background-item">
+              <button
+                className="delete-background-btn"
+                onClick={() => handleDeleteBackground(bg.id, bg.image_url)}
+                title="Delete background"
+              >
+                ×
+              </button>
               <img src={bg.image_url} alt={bg.name} className="background-preview" />
               <p className="background-name">{bg.name}</p>
               <button
