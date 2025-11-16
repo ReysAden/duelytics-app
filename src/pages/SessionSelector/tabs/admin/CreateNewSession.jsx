@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { supabase } from '../../../../lib/supabase';
 import './CreateNewSession.css';
 
+const GAME_MODES = [
+  { label: 'Duelist Cup', value: 'duelist_cup' },
+  { label: 'Rated', value: 'rated' },
+  { label: 'Ladder', value: 'ladder' }
+];
+
 function CreateNewSession() {
   const [sessionName, setSessionName] = useState('');
   const [gameMode, setGameMode] = useState('');
@@ -10,6 +16,8 @@ function CreateNewSession() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [gameModeSearch, setGameModeSearch] = useState('');
+  const [showGameModeDropdown, setShowGameModeDropdown] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,16 +33,9 @@ function CreateNewSession() {
         return;
       }
 
-      // Convert game mode to match backend format
-      const gameModeMap = {
-        'Duelist Cup': 'duelist_cup',
-        'Rated': 'rated',
-        'Ladder': 'ladder'
-      };
-
-      // Validate dates
-      if (!startTime || !endTime) {
-        setError('Please select both start and end times');
+      // Validate inputs
+      if (!sessionName || !gameMode || !startTime || !endTime) {
+        setError('Please fill out all fields');
         return;
       }
 
@@ -44,7 +45,7 @@ function CreateNewSession() {
 
       const requestBody = {
         name: sessionName,
-        game_mode: gameModeMap[gameMode],
+        game_mode: gameMode,
         starts_at: startsAt,
         ends_at: endsAt
       };
@@ -78,65 +79,85 @@ function CreateNewSession() {
     }
   };
 
+  const selectedModeLabel = GAME_MODES.find(m => m.value === gameMode)?.label;
+  const filteredGameModes = GAME_MODES.filter(m => m.label.toLowerCase().includes(gameModeSearch.toLowerCase()));
+
   return (
-    <div className="create-session-form">
-      {error && <div className="message error-message">{error}</div>}
-      {success && <div className="message success-message">{success}</div>}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="sessionName">Session Name</label>
-          <input
-            type="text"
-            id="sessionName"
-            value={sessionName}
-            onChange={(e) => setSessionName(e.target.value)}
-            placeholder="Enter session name"
-            required
-          />
-        </div>
+    <div className="create-session-form-wrapper">
+      <div className="create-session-form">
+        {success && <div className="message success-message">{success}</div>}
+        
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <input
+              type="text"
+              id="sessionName"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              placeholder="Session Name"
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="gameMode">Game Mode</label>
-          <select
-            id="gameMode"
-            value={gameMode}
-            onChange={(e) => setGameMode(e.target.value)}
-            required
-          >
-            <option value="">Select game mode</option>
-            <option value="Duelist Cup">Duelist Cup</option>
-            <option value="Rated">Rated</option>
-            <option value="Ladder">Ladder</option>
-          </select>
-        </div>
+          <div className="form-group">
+            <div className="dropdown-container">
+              <button
+                onClick={() => setShowGameModeDropdown(!showGameModeDropdown)}
+                className={`dropdown-button ${showGameModeDropdown ? 'open' : ''}`}
+                onBlur={() => setTimeout(() => setShowGameModeDropdown(false), 200)}
+              >
+                <span className="dropdown-label">
+                  {selectedModeLabel || 'Select game mode'}
+                </span>
+                <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+                </svg>
+              </button>
+              {showGameModeDropdown && filteredGameModes.length > 0 && (
+                <div className="dropdown-panel">
+                  <ul className="dropdown-list">
+                    {filteredGameModes.map(mode => (
+                      <li key={mode.value}>
+                        <button
+                          className="dropdown-option"
+                          onMouseDown={() => {
+                            setGameMode(mode.value);
+                            setGameModeSearch('');
+                            setShowGameModeDropdown(false);
+                          }}
+                        >
+                          {mode.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="startTime">Start Time</label>
-          <input
-            type="datetime-local"
-            id="startTime"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            required
-          />
-        </div>
+          <div className="form-group">
+            <input
+              type="datetime-local"
+              id="startTime"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="endTime">End Time</label>
-          <input
-            type="datetime-local"
-            id="endTime"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            required
-          />
-        </div>
+          <div className="form-group">
+            <input
+              type="datetime-local"
+              id="endTime"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </div>
 
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Session'}
-        </button>
-      </form>
+          <button type="submit" className="submit-btn" disabled={loading || !sessionName || !gameMode || !startTime || !endTime}>
+            {loading ? 'Creating...' : 'Create Session'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

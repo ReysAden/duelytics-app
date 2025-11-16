@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, db } from '../../../../lib/supabase';
 import './Leaderboard.css';
 
 function Leaderboard() {
@@ -10,12 +10,18 @@ function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [sessionData, setSessionData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
     if (sessionId) {
       fetchSession();
       fetchLeaderboard();
+      setupRealtimeLeaderboard();
     }
+
+    return () => {
+      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
+    };
   }, [sessionId]);
 
   const fetchSession = async () => {
@@ -48,6 +54,18 @@ function Leaderboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const setupRealtimeLeaderboard = () => {
+    subscriptionRef.current = db.subscribeToLeaderboard(sessionId, (payload) => {
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        setLeaderboard((prev) => {
+          const updated = prev.map((p) => (p.user_id === payload.new.user_id ? payload.new : p));
+          if (!updated.find((p) => p.user_id === payload.new.user_id)) updated.push(payload.new);
+          return updated.sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
+        });
+      }
+    });
   };
 
   const getTierColor = (tierName) => {

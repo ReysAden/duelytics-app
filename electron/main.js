@@ -25,10 +25,11 @@ function createWindow() {
       enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.js'),
     },
-    show: false, // Don't show until ready
-    titleBarStyle: 'default',
+    show: false,
+    frame: false,
+    titleBarStyle: 'hidden',
     icon: path.join(__dirname, '../assets/icon.png'),
-    autoHideMenuBar: true, // Hide menu bar
+    autoHideMenuBar: true,
   })
 
   // Load the app
@@ -134,6 +135,25 @@ ipcMain.handle('duel:submitted', (event, sessionId) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('duel:submitted', sessionId)
   }
+})
+
+// Window controls
+ipcMain.handle('window:minimize', () => {
+  if (mainWindow) mainWindow.minimize()
+})
+
+ipcMain.handle('window:maximize', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  }
+})
+
+ipcMain.handle('window:close', () => {
+  if (mainWindow) mainWindow.close()
 })
 
 // Security: Prevent new window creation

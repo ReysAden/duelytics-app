@@ -1,8 +1,8 @@
 import './PersonalStats.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, db } from '../../../../lib/supabase';
 import Overview from './Overview';
 import PointsTracker from './PointsTracker';
 import DeckAnalysis from './DeckAnalysis';
@@ -15,11 +15,21 @@ function PersonalStats({ sessionData, targetUserId = null }) {
   const [activeSubTab, setActiveSubTab] = useState('Overview');
   const [dateFilter, setDateFilter] = useState('all');
   const [availableDates, setAvailableDates] = useState([]);
+  const subscriptionRef = useRef(null);
 
   const showPointsTracker = sessionData?.gameMode === 'rated' || sessionData?.gameMode === 'duelist_cup';
 
   useEffect(() => {
     fetchAvailableDates();
+    subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        fetchAvailableDates();
+      }
+    });
+    
+    return () => {
+      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
+    };
   }, [sessionId, targetUserId]);
 
   const fetchAvailableDates = async () => {

@@ -85,29 +85,67 @@ export const db = {
     return { data, error }
   },
 
-  // Real-time subscriptions
-  subscribeToSession(sessionId, callback) {
+  subscribeToDuels(sessionId, onDuelAdded, onDuelUpdated, onDuelDeleted) {
     return supabase
-      .channel(`session_${sessionId}`)
+      .channel(`duels:${sessionId}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'duels',
-          filter: `session_id=eq.${sessionId}`
-        },
-        callback
+        { event: 'INSERT', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
+        (payload) => onDuelAdded?.(payload.new)
       )
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'player_session_stats',
-          filter: `session_id=eq.${sessionId}`
-        },
-        callback
+        { event: 'UPDATE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
+        (payload) => onDuelUpdated?.(payload.new)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
+        (payload) => onDuelDeleted?.(payload.old)
+      )
+      .subscribe()
+  },
+
+  subscribeToPlayerStats(sessionId, onStatsUpdated) {
+    return supabase
+      .channel(`stats:${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'player_session_stats', filter: `session_id=eq.${sessionId}` },
+        (payload) => onStatsUpdated?.(payload.new)
+      )
+      .subscribe()
+  },
+
+  subscribeToLeaderboard(sessionId, onUpdate) {
+    return supabase
+      .channel(`leaderboard:${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'player_session_stats', filter: `session_id=eq.${sessionId}` },
+        (payload) => onUpdate?.(payload)
+      )
+      .subscribe()
+  },
+
+  subscribeToDuelChanges(sessionId, onUpdate) {
+    return supabase
+      .channel(`duels_all:${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
+        (payload) => onUpdate?.(payload)
+      )
+      .subscribe()
+  },
+
+  subscribeToSessions(onUpdate) {
+    return supabase
+      .channel('sessions_all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sessions' },
+        (payload) => onUpdate?.(payload.new || payload.old)
       )
       .subscribe()
   }

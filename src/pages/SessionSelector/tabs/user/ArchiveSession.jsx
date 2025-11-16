@@ -1,31 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSessionContext } from '../../../../contexts/SessionContext';
 import './ArchiveSession.css';
 
 function ArchiveSession() {
-  const [sessions, setSessions] = useState([]);
+  const { archivedSessions, loading: contextLoading } = useSessionContext();
   const [selectedSession, setSelectedSession] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    fetchArchivedSessions();
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchArchivedSessions = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/sessions?status=archived');
-      const data = await response.json();
-      
-      if (data.sessions) {
-        setSessions(data.sessions);
+  useEffect(() => {
+    // Close dropdown on ESC key
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowDropdown(false);
       }
-    } catch (err) {
-      setError('Failed to load archived sessions');
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSessionSelect = (sessionId) => {
+    setSelectedSession(sessionId);
+    setShowDropdown(false);
   };
 
   const handleViewSession = () => {
@@ -33,40 +45,70 @@ function ArchiveSession() {
     navigate(`/session/${selectedSession}`);
   };
 
-  if (loading) {
+  if (contextLoading) {
     return <div className="archive-session">Loading archived sessions...</div>;
   }
+
+  const selectedSessionData = archivedSessions.find(s => s.id === parseInt(selectedSession));
 
   return (
     <div className="archive-session">
       {error && <div className="message error-message">{error}</div>}
 
-      <div className="form-group">
-        <label htmlFor="session">Select an archived session</label>
-        <select
-          id="session"
-          value={selectedSession}
-          onChange={(e) => setSelectedSession(e.target.value)}
+      <div className="session-selector">
+        {/* Custom Dropdown */}
+        <div className="dropdown-container" ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className={`dropdown-button ${showDropdown ? 'open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={showDropdown}
+          >
+            <span className="dropdown-label">
+              {selectedSessionData 
+                ? `${selectedSessionData.name} (${selectedSessionData.game_mode})`
+                : 'Choose a session...'
+              }
+            </span>
+            <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+            </svg>
+          </button>
+
+          {showDropdown && (
+            <div className="dropdown-panel" role="menu" aria-hidden={!showDropdown}>
+              <ul className="dropdown-list">
+                {archivedSessions.length === 0 ? (
+                  <li className="dropdown-empty">No archived sessions available</li>
+                ) : (
+                  archivedSessions.map((session) => (
+                    <li key={session.id} role="menuitem">
+                      <button
+                        className="dropdown-option"
+                        onClick={() => handleSessionSelect(session.id)}
+                      >
+                        <div className="session-name">{session.name}</div>
+                        <div className="session-mode">Mode: {session.game_mode}</div>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <button
+          className="view-btn"
+          onClick={handleViewSession}
+          disabled={!selectedSession}
         >
-          <option value="">Choose a session...</option>
-          {sessions.map((session) => (
-            <option key={session.id} value={session.id}>
-              {session.name} ({session.game_mode})
-            </option>
-          ))}
-        </select>
+          View Session
+        </button>
       </div>
 
-      <button
-        className="view-btn"
-        onClick={handleViewSession}
-        disabled={!selectedSession}
-      >
-        View
-      </button>
-
-      {sessions.length === 0 && !loading && (
-        <p style={{ color: 'rgba(255, 255, 255, 0.5)', marginTop: '20px' }}>
+      {archivedSessions.length === 0 && !contextLoading && (
+        <p className="empty-message">
           No archived sessions found
         </p>
       )}

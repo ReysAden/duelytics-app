@@ -1,21 +1,24 @@
 .decks-tab {
-  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .deck-form {
-  max-width: 400px;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  width: 100%;
 }
 
 .form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 6px;
+  display: none;
 }
 
 .form-group input[type="text"] {
@@ -68,26 +71,29 @@
 }
 
 .submit-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  padding: 10px 28px;
+  padding: 12px 32px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
+  transition: background-color 0.2s;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background-color: #059669;
 }
 
 .submit-btn:disabled {
-  opacity: 0.5;
+  background-color: #6b7280 !important;
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.submit-btn:disabled:hover {
+  background-color: #6b7280 !important;
 }
 
 .decks-divider {
@@ -96,17 +102,24 @@
   margin: 32px 0;
 }
 
+.current-decks {
+  width: 100%;
+  margin-top: 2rem;
+}
+
 .current-decks h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 16px 0;
+  display: none;
 }
 
 .deck-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 16px;
+  margin: 0 auto;
+  width: 90%;
+  max-width: 1000px;
+  padding: 0;
+  list-style: none;
 }
 
 .deck-item {
@@ -188,4 +201,9 @@
   border: 1px solid rgba(76, 175, 80, 0.5);
   color: #66bb6a;
   font-weight: 600;
+}
+
+.delete-confirm-btn {
+  background: #f44336;
+  color: white;
 }

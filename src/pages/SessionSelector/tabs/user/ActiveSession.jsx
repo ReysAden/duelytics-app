@@ -1,51 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../../lib/supabase';
+import { useSessionContext } from '../../../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import './ActiveSession.css';
 
 function ActiveSession() {
-  const [sessions, setSessions] = useState([]);
+  const { sessions, tiers, loading: contextLoading } = useSessionContext();
   const [selectedSession, setSelectedSession] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showLadderModal, setShowLadderModal] = useState(false);
-  const [tiers, setTiers] = useState([]);
   const [initialTier, setInitialTier] = useState('');
   const [initialNetWins, setInitialNetWins] = useState(0);
+  const [showTierDropdown, setShowTierDropdown] = useState(false);
+  const [showWinsDropdown, setShowWinsDropdown] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+  const tierDropdownRef = useRef(null);
+  const winsDropdownRef = useRef(null);
 
   useEffect(() => {
-    fetchActiveSessions();
-    fetchTiers();
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchActiveSessions = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/sessions?status=active');
-      const data = await response.json();
-      
-      if (data.sessions) {
-        setSessions(data.sessions);
+  useEffect(() => {
+    // Close dropdown on ESC key
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowDropdown(false);
       }
-    } catch (err) {
-      setError('Failed to load sessions');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const fetchTiers = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/ladder-tiers');
-      const data = await response.json();
-      if (data.tiers) {
-        setTiers(data.tiers);
-      }
-    } catch (err) {
-      // Silent fail
-    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSessionSelect = (sessionId) => {
+    setSelectedSession(sessionId);
+    setShowDropdown(false);
   };
 
   const handleJoinClick = async () => {
@@ -54,7 +56,6 @@ function ActiveSession() {
     const session = sessions.find(s => s.id === parseInt(selectedSession));
     
     if (session?.game_mode === 'ladder') {
-      // Check if user already joined this session
       try {
         const { data: { session: authSession } } = await supabase.auth.getSession();
         const response = await fetch(`http://localhost:3001/api/sessions/${selectedSession}/participant-check`, {
@@ -65,10 +66,8 @@ function ActiveSession() {
         const data = await response.json();
         
         if (data.isParticipant) {
-          // Already joined, go directly to session
           navigate(`/session/${selectedSession}`);
         } else {
-          // First time, show modal
           setShowLadderModal(true);
         }
       } catch (err) {
@@ -118,7 +117,6 @@ function ActiveSession() {
         throw new Error(data.error || 'Failed to join session');
       }
 
-      // Navigate to DuelRecords for this session
       navigate(`/session/${selectedSession}`);
     } catch (err) {
       setError(err.message || 'Failed to join session');
@@ -128,38 +126,68 @@ function ActiveSession() {
     }
   };
 
-  if (loading) {
+  if (contextLoading) {
     return <div className="active-session">Loading sessions...</div>;
   }
+
+  const selectedSessionData = sessions.find(s => s.id === parseInt(selectedSession));
 
   return (
     <div className="active-session">
       {error && <div className="message error-message">{error}</div>}
       {success && <div className="message success-message">{success}</div>}
 
-      <div className="form-group">
-        <label htmlFor="session">Select a session</label>
-        <select
-          id="session"
-          value={selectedSession}
-          onChange={(e) => setSelectedSession(e.target.value)}
-        >
-          <option value="">Choose a session...</option>
-          {sessions.map((session) => (
-            <option key={session.id} value={session.id}>
-              {session.name} ({session.game_mode})
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="session-selector">
+        {/* Custom Dropdown */}
+        <div className="dropdown-container" ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className={`dropdown-button ${showDropdown ? 'open' : ''}`}
+            aria-haspopup="true"
+            aria-expanded={showDropdown}
+          >
+            <span className="dropdown-label">
+              {selectedSessionData 
+                ? `${selectedSessionData.name} (${selectedSessionData.game_mode})`
+                : 'Choose a session...'
+              }
+            </span>
+            <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+            </svg>
+          </button>
 
-      <button
-        className="join-btn"
-        onClick={handleJoinClick}
-        disabled={!selectedSession || joining}
-      >
-        {joining ? 'Joining...' : 'Join'}
-      </button>
+          {showDropdown && (
+            <div className="dropdown-panel" role="menu" aria-hidden={!showDropdown}>
+              <ul className="dropdown-list">
+                {sessions.length === 0 ? (
+                  <li className="dropdown-empty">No active sessions available</li>
+                ) : (
+                  sessions.map((session) => (
+                    <li key={session.id} role="menuitem">
+                      <button
+                        className="dropdown-option"
+                        onClick={() => handleSessionSelect(session.id)}
+                      >
+                        <div className="session-name">{session.name}</div>
+                        <div className="session-mode">Mode: {session.game_mode}</div>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <button
+          className="join-btn"
+          onClick={handleJoinClick}
+          disabled={!selectedSession || joining}
+        >
+          {joining ? 'Joining...' : 'Join Session'}
+        </button>
+      </div>
 
       {showLadderModal && (
         <div className="modal-overlay" onClick={() => setShowLadderModal(false)}>
@@ -168,36 +196,79 @@ function ActiveSession() {
             <p>Enter your starting rank information</p>
             
             <div className="form-group">
-              <label htmlFor="initialTier">Initial Tier</label>
-              <select
-                id="initialTier"
-                value={initialTier}
-                onChange={(e) => setInitialTier(e.target.value)}
-              >
-                <option value="">Select tier...</option>
-                {tiers.map((tier) => (
-                  <option key={tier.id} value={tier.id}>
-                    {tier.tier_name}
-                  </option>
-                ))}
-              </select>
+              <div className="dropdown-container" ref={tierDropdownRef}>
+                <button
+                  onClick={() => setShowTierDropdown(!showTierDropdown)}
+                  className={`modal-dropdown-button ${showTierDropdown ? 'open' : ''}`}
+                  onBlur={() => setTimeout(() => setShowTierDropdown(false), 200)}
+                >
+                  <span className="dropdown-label">
+                    {initialTier ? tiers.find(t => t.id === parseInt(initialTier))?.tier_name : 'Select tier...'}
+                  </span>
+                  <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+                  </svg>
+                </button>
+                {showTierDropdown && (
+                  <div className="modal-dropdown-panel">
+                    <ul className="dropdown-list">
+                      {tiers.map((tier) => (
+                        <li key={tier.id}>
+                          <button
+                            className="dropdown-option"
+                            onMouseDown={() => {
+                              setInitialTier(tier.id);
+                              setShowTierDropdown(false);
+                            }}
+                          >
+                            {tier.tier_name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="netWins">Net Wins in Tier</label>
-              <select
-                id="netWins"
-                value={initialNetWins}
-                onChange={(e) => setInitialNetWins(parseInt(e.target.value))}
-                disabled={!initialTier}
-              >
-                {initialTier && Array.from(
-                  { length: (tiers.find(t => t.id === parseInt(initialTier))?.wins_required || 5) + 1 },
-                  (_, i) => i
-                ).map(num => (
-                  <option key={num} value={num}>{num}</option>
-                ))}
-              </select>
+              <div className="dropdown-container" ref={winsDropdownRef}>
+                <button
+                  onClick={() => setShowWinsDropdown(!showWinsDropdown)}
+                  className={`modal-dropdown-button ${showWinsDropdown ? 'open' : ''}`}
+                  disabled={!initialTier}
+                  onBlur={() => setTimeout(() => setShowWinsDropdown(false), 200)}
+                >
+                  <span className="dropdown-label">
+                    {initialNetWins !== 0 ? initialNetWins : 'Select wins...'}
+                  </span>
+                  <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+                  </svg>
+                </button>
+                {showWinsDropdown && initialTier && (
+                  <div className="modal-dropdown-panel">
+                    <ul className="dropdown-list">
+                      {Array.from(
+                        { length: (tiers.find(t => t.id === parseInt(initialTier))?.wins_required || 5) + 1 },
+                        (_, i) => i
+                      ).map(num => (
+                        <li key={num}>
+                          <button
+                            className="dropdown-option"
+                            onMouseDown={() => {
+                              setInitialNetWins(num);
+                              setShowWinsDropdown(false);
+                            }}
+                          >
+                            {num}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="modal-actions">

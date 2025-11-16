@@ -1,8 +1,8 @@
 import './DuelRecords.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../lib/supabase';
+import { supabase, db } from '../../lib/supabase';
 import Submit from './tabs/Submit';
 import Browse from './tabs/Browse';
 import PersonalStats from './tabs/PersonalStats/PersonalStats';
@@ -38,12 +38,19 @@ function DuelRecords() {
     winsRequired: 5
   });
   const navigate = useNavigate();
+  const subscriptionsRef = useRef([]);
 
   useEffect(() => {
     if (sessionId) {
       fetchSessionData();
       fetchUserStats();
+      setupRealtimeSubscriptions();
     }
+
+    return () => {
+      subscriptionsRef.current.forEach((channel) => supabase.removeChannel(channel));
+      subscriptionsRef.current = [];
+    };
   }, [sessionId]);
 
   const fetchSessionData = async () => {
@@ -84,23 +91,41 @@ function DuelRecords() {
       });
       
       const data = await response.json();
-      console.log('Stats response:', data);
       
       if (data.stats) {
-        const newStats = {
+        setUserStats({
           points: data.stats.current_points || 0,
           wins: data.stats.total_wins || 0,
           losses: (data.stats.total_games || 0) - (data.stats.total_wins || 0),
           tier: data.stats.ladder_tiers?.tier_name || null,
           netWins: data.stats.current_net_wins || 0,
           winsRequired: data.stats.ladder_tiers?.wins_required || 5
-        };
-        console.log('Setting user stats:', newStats);
-        setUserStats(newStats);
+        });
       }
     } catch (err) {
       console.error('Failed to load stats:', err);
     }
+  };
+
+  const setupRealtimeSubscriptions = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const currentUserId = session.user.user_metadata?.discord_id;
+    const statsChannel = db.subscribeToPlayerStats(sessionId, (updatedStats) => {
+      if (updatedStats.user_id === currentUserId) {
+        setUserStats({
+          points: updatedStats.current_points || 0,
+          wins: updatedStats.total_wins || 0,
+          losses: (updatedStats.total_games || 0) - (updatedStats.total_wins || 0),
+          tier: updatedStats.ladder_tiers?.tier_name || null,
+          netWins: updatedStats.current_net_wins || 0,
+          winsRequired: updatedStats.ladder_tiers?.wins_required || 5
+        });
+      }
+    });
+
+    subscriptionsRef.current.push(statsChannel);
   };
 
   const handleBackToLobby = () => {

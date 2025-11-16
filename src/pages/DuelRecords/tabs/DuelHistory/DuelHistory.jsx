@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, db } from '../../../../lib/supabase';
 import './DuelHistory.css';
 
 export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = false }) {
@@ -8,10 +8,18 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
   const [duels, setDuels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
-    if (sessionId) fetchDuels();
-  }, [sessionId]);
+    if (sessionId) {
+      fetchDuels();
+      if (!isArchived) setupRealtimeDuels();
+    }
+
+    return () => {
+      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
+    };
+  }, [sessionId, isArchived]);
 
   const fetchDuels = async () => {
     try {
@@ -55,6 +63,18 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const setupRealtimeDuels = () => {
+    subscriptionRef.current = db.subscribeToDuels(
+      sessionId,
+      (newDuel) => setDuels((prev) => [newDuel, ...prev]),
+      (updatedDuel) => setDuels((prev) => prev.map((d) => (d.id === updatedDuel.id ? updatedDuel : d))),
+      (deletedDuel) => {
+        setDuels((prev) => prev.filter((d) => d.id !== deletedDuel.id));
+        onDuelDeleted?.();
+      }
+    );
   };
 
   const formatDate = (dateString) => {

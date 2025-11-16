@@ -1,7 +1,7 @@
 import './MatchupMatrix.css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, db } from '../../../../lib/supabase';
 
 function MatchupMatrix() {
   const { sessionId } = useParams();
@@ -10,9 +10,19 @@ function MatchupMatrix() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('matrix');
   const [legendFilter, setLegendFilter] = useState('top10');
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
     fetchMatchups();
+    subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        fetchMatchups();
+      }
+    });
+    
+    return () => {
+      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
+    };
   }, [sessionId]);
 
   const fetchMatchups = async () => {

@@ -33,10 +33,10 @@
     "backToLobby": "Back to Lobby"
   },
   "sessionSelector": {
-    "activeSession": "Active Session",
-    "archiveSession": "Archive Session",
+    "activeSession": "Active Sessions",
+    "archiveSession": "Archive Sessions",
     "backgrounds": "Backgrounds",
-    "createNewSession": "Create New Session",
+    "createNewSession": "Create Session",
     "manageSessions": "Manage Sessions",
     "decks": "Decks",
     "noActiveSessions": "No active sessions found",
@@ -56,5 +56,32 @@
     "rated": "Rated",
     "ladder": "Ladder",
     "casual": "Casual"
+  },
+  "ui": {
+    "chooseSession": "Choose a session...",
+    "selectTier": "Select tier...",
+    "selectWins": "Select wins...",
+    "joinSession": "Join Session",
+    "viewSession": "View Session",
+    "joining": "Joining...",
+    "mode": "Mode",
+    "noActiveSessionsAvailable": "No active sessions available",
+    "noArchivedSessionsAvailable": "No archived sessions available",
+    "noArchivedSessionsFound": "No archived sessions found",
+    "ladderSessionSetup": "Ladder Session Setup",
+    "enterStartingRankInfo": "Enter your starting rank information",
+    "cancel": "Cancel",
+    "loadingArchivedSessions": "Loading archived sessions...",
+    "backgroundName": "Background Name",
+    "chooseImage": "Choose Image",
+    "upload": "Upload",
+    "uploading": "Uploading...",
+    "pleaseProvideNameAndImage": "Please provide both name and image",
+    "errorUploadingBackground": "Error uploading background",
+    "failedToUploadBackground": "Failed to upload background",
+    "delete": "Delete",
+    "setAsBackground": "Set as Background",
+    "deleteBackground": "Delete Background",
+    "confirmDelete": "Are you sure you want to delete this background?"
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
+import DeckCard from '../../../../components/DeckCard';
 import './Decks.css';
 
 function Decks() {
@@ -9,6 +10,8 @@ function Decks() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deckToDelete, setDeckToDelete] = useState(null);
 
   useEffect(() => {
     fetchDecks();
@@ -27,14 +30,19 @@ function Decks() {
     }
   };
 
-  const handleDeleteDeck = async (deckId) => {
-    if (!confirm('Delete this deck?')) return;
+  const handleDeleteDeck = (deckId) => {
+    setDeckToDelete(deckId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteDeck = async () => {
+    if (!deckToDelete) return;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/decks/${deckId}`, {
+      const response = await fetch(`http://localhost:3001/api/decks/${deckToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
@@ -46,10 +54,17 @@ function Decks() {
         throw new Error(data.error || 'Failed to delete deck');
       }
 
+      setShowDeleteModal(false);
+      setDeckToDelete(null);
       fetchDecks();
     } catch (err) {
       setError(err.message || 'Failed to delete deck');
     }
+  };
+
+  const cancelDeleteDeck = () => {
+    setShowDeleteModal(false);
+    setDeckToDelete(null);
   };
 
   const handleImageChange = (e) => {
@@ -114,29 +129,47 @@ function Decks() {
 
       <form onSubmit={handleSubmit} className="deck-form">
         <div className="form-group">
-          <label htmlFor="deckName">Deck Name</label>
           <input
             type="text"
             id="deckName"
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
-            placeholder="Enter deck name"
+            placeholder="Deck name"
             required
+            style={{
+              backgroundColor: '#374151',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '14px',
+              boxSizing: 'border-box',
+              width: '100%'
+            }}
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="deckImage">Deck Image</label>
           <input
             type="file"
             id="deckImage"
             accept="image/*"
             onChange={handleImageChange}
             required
+            style={{
+              backgroundColor: '#374151',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '14px',
+              boxSizing: 'border-box',
+              width: '100%'
+            }}
           />
         </div>
 
-        <button type="submit" className="submit-btn" disabled={loading}>
+        <button type="submit" className="submit-btn" disabled={loading || !deckName || !deckImage}>
           {loading ? 'Creating...' : 'Create Deck'}
         </button>
       </form>
@@ -144,29 +177,44 @@ function Decks() {
       <div className="decks-divider"></div>
 
       <div className="current-decks">
-        <h3>Current Decks</h3>
         {decks.length === 0 ? (
           <p style={{ color: 'rgba(255, 255, 255, 0.5)' }}>No decks yet</p>
         ) : (
           <div className="deck-list">
             {decks.map((deck) => (
-              <div key={deck.id} className="deck-item">
-                <button 
-                  className="delete-deck-btn"
-                  onClick={() => handleDeleteDeck(deck.id)}
-                  title="Delete deck"
-                >
-                  ×
-                </button>
-                {deck.image_url && (
-                  <img src={deck.image_url} alt={deck.name} className="deck-image" />
-                )}
-                <span className="deck-name">{deck.name}</span>
-              </div>
+              <DeckCard 
+                key={deck.id} 
+                deck={deck} 
+                onDelete={handleDeleteDeck}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={cancelDeleteDeck}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Deck</h3>
+            <p>Are you sure you want to delete this deck? This cannot be undone.</p>
+            
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn" 
+                onClick={cancelDeleteDeck}
+              >
+                Cancel
+              </button>
+              <button 
+                className="delete-confirm-btn" 
+                onClick={confirmDeleteDeck}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

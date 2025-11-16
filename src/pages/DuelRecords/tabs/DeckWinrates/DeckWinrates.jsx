@@ -1,15 +1,25 @@
 import './DeckWinrates.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, db } from '../../../../lib/supabase';
 
 function DeckWinrates() {
   const { sessionId } = useParams();
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
     fetchDeckWinrates();
+    subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        fetchDeckWinrates();
+      }
+    });
+    
+    return () => {
+      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
+    };
   }, [sessionId]);
 
   const fetchDeckWinrates = async () => {

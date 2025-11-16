@@ -24,6 +24,7 @@
     "recharts": "^3.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "@vitejs/plugin-react": "^4.1.0",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
