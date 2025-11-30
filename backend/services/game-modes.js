@@ -1,16 +1,10 @@
-const { supabaseAdmin } = require('../database')
+const { supabaseAdmin } = require('../config/database')
 
-// Game mode specific logic - clean separation of concerns
 const gameModeHandlers = {
-  
   ladder: {
-    // Ladder uses net wins for tier progression
-    calculatePointChange: (result) => {
-      return result === 'win' ? 1 : -1; // Always +1 or -1 net wins
-    },
+    calculatePointChange: (result) => result === 'win' ? 1 : -1,
     
-    // Update player stats for ladder mode
-    updatePlayerStats: async (sessionId, userId, result, pointChange) => {
+    async updatePlayerStats(sessionId, userId, result, pointChange) {
       await supabaseAdmin.rpc('update_ladder_stats', {
         p_session_id: sessionId,
         p_user_id: userId,
@@ -21,80 +15,36 @@ const gameModeHandlers = {
   },
   
   rated: {
-    // Rated uses exact point values entered by user
-    calculatePointChange: (userInputPoints) => {
-      return parseInt(userInputPoints); // User enters exact amount
-    },
+    calculatePointChange: (userInputPoints) => parseInt(userInputPoints),
     
-    // Update player stats for rated mode
-    updatePlayerStats: async (sessionId, userId, result, pointChange) => {
-      const updateQuery = `
-        UPDATE player_session_stats 
-        SET 
-          total_games = total_games + 1,
-          total_wins = total_wins + $3,
-          current_points = current_points + $4,
-          last_updated = CURRENT_TIMESTAMP
-        WHERE session_id = $1 AND user_id = $2
-      `;
-      
-      await query(updateQuery, [
-        sessionId,
-        userId,
-        result === 'win' ? 1 : 0,
-        pointChange
-      ]);
+    async updatePlayerStats(sessionId, userId, result, pointChange) {
+      await supabaseAdmin.rpc('update_rated_stats', {
+        p_session_id: sessionId,
+        p_user_id: userId,
+        p_result: result,
+        p_point_change: pointChange
+      })
     }
   },
   
   duelist_cup: {
-    // Duelist Cup uses exact points but floors at 0
-    calculatePointChange: async (sessionId, userId, userInputPoints) => {
-      // Get current points to calculate floor
-      const currentStats = await query(
-        'SELECT current_points FROM player_session_stats WHERE session_id = $1 AND user_id = $2',
-        [sessionId, userId]
-      );
-      
-      const currentPoints = currentStats.rows[0]?.current_points || 0;
-      const newPoints = currentPoints + parseInt(userInputPoints);
-      
-      // Floor at 0 - can't go below zero points
-      return Math.max(0, newPoints) - currentPoints;
-    },
+    calculatePointChange: (userInputPoints) => parseInt(userInputPoints),
     
-    // Update player stats for duelist cup mode
-    updatePlayerStats: async (sessionId, userId, result, pointChange) => {
-      const updateQuery = `
-        UPDATE player_session_stats 
-        SET 
-          total_games = total_games + 1,
-          total_wins = total_wins + $3,
-          current_points = GREATEST(0, current_points + $4), -- Floor at 0
-          last_updated = CURRENT_TIMESTAMP
-        WHERE session_id = $1 AND user_id = $2
-      `;
-      
-      await query(updateQuery, [
-        sessionId,
-        userId,
-        result === 'win' ? 1 : 0,
-        pointChange
-      ]);
+    async updatePlayerStats(sessionId, userId, result, pointChange) {
+      await supabaseAdmin.rpc('update_duelist_cup_stats', {
+        p_session_id: sessionId,
+        p_user_id: userId,
+        p_result: result,
+        p_point_change: pointChange
+      })
     }
   }
-};
+}
 
-// Get the appropriate handler for a game mode
 const getGameModeHandler = (gameMode) => {
-  const handler = gameModeHandlers[gameMode];
-  if (!handler) {
-    throw new Error(`Unsupported game mode: ${gameMode}`);
-  }
-  return handler;
-};
+  const handler = gameModeHandlers[gameMode]
+  if (!handler) throw new Error(`Unsupported game mode: ${gameMode}`)
+  return handler
+}
 
-module.exports = {
-  gameModeHandlers,
-  getGameModeHandler
-};
+module.exports = { gameModeHandlers, getGameModeHandler }

@@ -6,7 +6,8 @@ const languages = [
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'ko', name: '한국어', flag: '🇰🇷' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' }
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
 ];
 
 function LanguageSelector() {
@@ -15,6 +16,8 @@ function LanguageSelector() {
   const handleLanguageChange = (langCode) => {
     i18n.changeLanguage(langCode);
     localStorage.setItem('language', langCode);
+    // Notify overlay of language change
+    window.electronAPI?.notifyLanguageChange?.(langCode);
   };
 
   return (

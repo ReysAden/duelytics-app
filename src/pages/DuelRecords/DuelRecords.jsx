@@ -1,269 +1,213 @@
-import './DuelRecords.css';
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase, db } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
+import './DuelRecords.css';
+import { TabHeader } from '../../components/TabHeader';
+import { DuelRecordsSidebar } from './components/DuelRecordsSidebar';
+import { SessionDataProvider, useSessionData } from '../../contexts/SessionDataContext';
 import Submit from './tabs/Submit';
-import Browse from './tabs/Browse';
 import PersonalStats from './tabs/PersonalStats/PersonalStats';
-import DuelHistory from './tabs/DuelHistory/DuelHistory';
 import DeckWinrates from './tabs/DeckWinrates/DeckWinrates';
 import MatchupMatrix from './tabs/MatchupMatrix/MatchupMatrix';
+import DuelHistory from './tabs/DuelHistory/DuelHistory';
 import Leaderboard from './tabs/Leaderboard/Leaderboard';
 
-const getTierColor = (tierName) => {
-  if (!tierName) return '#ffffff';
-  const tier = tierName.toLowerCase();
-  if (tier.includes('rookie')) return '#4ade80';
-  if (tier.includes('bronze')) return '#cd7f32';
-  if (tier.includes('silver')) return '#c0c0c0';
-  if (tier.includes('gold')) return '#ffd700';
-  if (tier.includes('platinum')) return '#87ceeb';
-  if (tier.includes('diamond')) return '#b19cd9';
-  if (tier.includes('master')) return '#ff8c00';
-  return '#ffffff';
-};
-
-function DuelRecords() {
-  const { t } = useTranslation(['common', 'duelRecords']);
+function DuelRecordsContent() {
+  const { t } = useTranslation(['duelRecords']);
   const { sessionId } = useParams();
-  const [sessionData, setSessionData] = useState(null);
-  const [activeTab, setActiveTab] = useState(sessionData?.status === 'archived' ? 'Browse' : 'Submit');
-  const [userStats, setUserStats] = useState({
-    points: 0,
-    wins: 0,
-    losses: 0,
-    tier: null,
-    netWins: 0,
-    winsRequired: 5
-  });
-  const navigate = useNavigate();
-  const subscriptionsRef = useRef([]);
+  const { 
+    sessionData: contextSessionData, 
+    userStats, 
+    invalidateCache, 
+    fetchLeaderboardImmediate, 
+    fetchDuelsImmediate, 
+    fetchUserStatsImmediate,
+    fetchDeckWinratesImmediate,
+    fetchPersonalOverviewImmediate,
+    fetchPersonalDeckAnalysisImmediate,
+    fetchPersonalMatchupsImmediate,
+    fetchMatchupsImmediate
+  } = useSessionData();
+  const [activeTab, setActiveTab] = useState('submit');
+  const [activeSubTab, setActiveSubTab] = useState('Overview');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [availableDates, setAvailableDates] = useState([]);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  // Close overlay when leaving DuelRecords
+  useEffect(() => {
+    return () => {
+      window.electronAPI?.overlay?.close?.();
+    };
+  }, []);
+
+  // Format session data from context
+  const sessionData = {
+    name: contextSessionData?.name || '',
+    gameMode: contextSessionData?.game_mode || ''
+  };
+
+  // Format stats from context
+  const stats = {
+    points: userStats?.current_points || 0,
+    wins: userStats?.total_wins || 0,
+    losses: (userStats?.total_games || 0) - (userStats?.total_wins || 0),
+    tier: userStats?.ladder_tiers?.tier_name || null,
+    netWins: userStats?.current_net_wins || 0,
+    winsRequired: userStats?.ladder_tiers?.wins_required || 0
+  };
+
+  const getTabDisplayName = () => {
+    const names = {
+      'submit': t('tabs.submit'),
+      'personal-stats': t('tabs.personalStats'),
+      'deck-winrate': t('tabs.deckWinrates'),
+      'matchup-matrix': t('tabs.matchupMatrix'),
+      'history': t('tabs.duelHistory'),
+      'leaderboard': t('tabs.leaderboard')
+    };
+    return names[activeTab] || 'Duel Records';
+  };
+
+  const handleOpenOverlay = async () => {
+    if (window.electronAPI?.overlay?.open) {
+      const { data: { session } } = await supabase.auth.getSession();
+      setOverlayOpen(true);
+      const language = localStorage.getItem('language') || 'en';
+      await window.electronAPI.overlay.open({
+        sessionId,
+        authToken: session?.access_token,
+        language
+      });
+      // Listen for overlay close
+      const checkInterval = setInterval(() => {
+        if (!window.electronAPI?.overlay?.isOpen?.()) {
+          setOverlayOpen(false);
+          clearInterval(checkInterval);
+        }
+      }, 500);
+    }
+  };
 
   useEffect(() => {
-    if (sessionId) {
-      fetchSessionData();
-      fetchUserStats();
-      setupRealtimeSubscriptions();
-    }
-
+    // Cleanup: close overlay when component unmounts
     return () => {
-      subscriptionsRef.current.forEach((channel) => supabase.removeChannel(channel));
-      subscriptionsRef.current = [];
+      window.electronAPI?.overlay?.close?.();
     };
-  }, [sessionId]);
+  }, []);
 
-  const fetchSessionData = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`);
-      const data = await response.json();
-      
-      if (data.session) {
-        const session = {
-          name: data.session.name,
-          gameMode: data.session.game_mode,
-          status: data.session.status
-        };
-        setSessionData(session);
-        // Set initial tab based on session status
-        if (data.session.status === 'archived') {
-          setActiveTab('Browse');
-        }
+  // Listen for duel submissions from overlay
+  useEffect(() => {
+    if (!window.electronAPI?.onDuelSubmitted) return;
+
+    const handleDuelSubmitted = (submittedSessionId) => {
+      console.log('🔔 Duel submitted from overlay for session:', submittedSessionId);
+      // Only refresh if it's for the current session
+      if (submittedSessionId === sessionId) {
+        console.log('🔄 Refreshing ALL data after overlay submission');
+        // Invalidate cache for all data types
+        invalidateCache(['leaderboard', 'duels', 'userStats', 'deckWinrates', 'personalOverview', 'personalDeckAnalysis', 'personalMatchups', 'matchups']);
+        // Fetch all data types immediately
+        fetchLeaderboardImmediate();
+        fetchDuelsImmediate();
+        fetchUserStatsImmediate();
+        fetchDeckWinratesImmediate();
+        fetchPersonalOverviewImmediate();
+        fetchPersonalDeckAnalysisImmediate();
+        fetchPersonalMatchupsImmediate();
+        fetchMatchupsImmediate();
       }
-    } catch (err) {
-      console.error('Failed to load session:', err);
-      setSessionData({
-        name: 'Unknown Session',
-        gameMode: ''
-      });
-    }
-  };
+    };
 
-  const fetchUserStats = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+    window.electronAPI.onDuelSubmitted(handleDuelSubmitted);
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/stats`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.stats) {
-        setUserStats({
-          points: data.stats.current_points || 0,
-          wins: data.stats.total_wins || 0,
-          losses: (data.stats.total_games || 0) - (data.stats.total_wins || 0),
-          tier: data.stats.ladder_tiers?.tier_name || null,
-          netWins: data.stats.current_net_wins || 0,
-          winsRequired: data.stats.ladder_tiers?.wins_required || 5
-        });
-      }
-    } catch (err) {
-      console.error('Failed to load stats:', err);
-    }
-  };
-
-  const setupRealtimeSubscriptions = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const currentUserId = session.user.user_metadata?.discord_id;
-    const statsChannel = db.subscribeToPlayerStats(sessionId, (updatedStats) => {
-      if (updatedStats.user_id === currentUserId) {
-        setUserStats({
-          points: updatedStats.current_points || 0,
-          wins: updatedStats.total_wins || 0,
-          losses: (updatedStats.total_games || 0) - (updatedStats.total_wins || 0),
-          tier: updatedStats.ladder_tiers?.tier_name || null,
-          netWins: updatedStats.current_net_wins || 0,
-          winsRequired: updatedStats.ladder_tiers?.wins_required || 5
-        });
-      }
-    });
-
-    subscriptionsRef.current.push(statsChannel);
-  };
-
-  const handleBackToLobby = () => {
-    navigate('/');
-  };
+    // Note: electron IPC listeners don't return cleanup functions
+    // They persist for the lifetime of the window
+  }, [sessionId, invalidateCache, fetchLeaderboardImmediate, fetchDuelsImmediate, fetchUserStatsImmediate, fetchDeckWinratesImmediate, fetchPersonalOverviewImmediate, fetchPersonalDeckAnalysisImmediate, fetchPersonalMatchupsImmediate, fetchMatchupsImmediate]);
 
   return (
-    <>
-      <aside className="sidebar">
-        <h1 className="sidebar-title">{t('common:app.name')}</h1>
-        <div className="sidebar-divider"></div>
-        <p className="sidebar-session-name">
-          {sessionData?.name || 'Session Name'}
-        </p>
-        
-        <div className="sidebar-stats">
-          {sessionData?.gameMode === 'ladder' ? (
-            <>
-              <div className="stat-item">
-                <span className="stat-label">{t('common:stats.rank')}</span>
-                <span className="stat-value" style={{ color: getTierColor(userStats.tier) }}>
-                  {userStats.tier || t('common:stats.unranked')}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">{t('common:stats.netWins')}</span>
-                <span className="stat-value">{userStats.netWins}/{userStats.winsRequired}</span>
-              </div>
-            </>
-          ) : (
-            <div className="stat-item">
-              <span className="stat-label">{t('common:stats.points')}</span>
-              <span className="stat-value">
-                {sessionData?.gameMode === 'rated' 
-                  ? userStats.points.toFixed(2) 
-                  : Math.round(userStats.points)}
-              </span>
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <DuelRecordsSidebar
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        sessionName={sessionData.name}
+        gameMode={sessionData.gameMode}
+        stats={stats}
+        onOpenOverlay={handleOpenOverlay}
+        overlayOpen={overlayOpen}
+        activeSubTab={activeSubTab}
+        onSubTabChange={setActiveSubTab}
+        sessionData={sessionData}
+      />
+      <main style={{ flex: 1, marginLeft: '64px', overflow: 'auto' }}>
+        <div style={{ position: 'sticky', top: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', paddingTop: '24px', paddingBottom: '24px', zIndex: 30 }}>
+          <div 
+            style={{
+              backgroundColor: 'rgba(10, 10, 20, 0.7)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              minWidth: 'fit-content',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}
+          >
+            <h2 style={{
+              color: 'rgba(255, 255, 255, 0.95)',
+              fontSize: '16px',
+              fontWeight: '600',
+              margin: 0,
+              letterSpacing: '0.5px'
+            }}>
+              {getTabDisplayName()}
+            </h2>
+          </div>
+          {activeTab === 'personal-stats' && (
+            <div style={{ display: 'flex', gap: '8px', background: 'rgba(10, 10, 20, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '8px 12px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)' }}>
+              <button onClick={() => setActiveSubTab('Overview')} style={{ padding: '6px 10px', background: activeSubTab === 'Overview' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Overview' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Overview' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>{t('personalStats.overview')}</button>
+              {sessionData?.gameMode === 'rated' || sessionData?.gameMode === 'duelist_cup' ? <button onClick={() => setActiveSubTab('Points Tracker')} style={{ padding: '6px 10px', background: activeSubTab === 'Points Tracker' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Points Tracker' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Points Tracker' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>{t('personalStats.pointsTracker')}</button> : null}
+              <button onClick={() => setActiveSubTab('Deck Analysis')} style={{ padding: '6px 10px', background: activeSubTab === 'Deck Analysis' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Deck Analysis' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Deck Analysis' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>{t('personalStats.deckAnalysis')}</button>
+              <button onClick={() => setActiveSubTab('Coin Flip')} style={{ padding: '6px 10px', background: activeSubTab === 'Coin Flip' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Coin Flip' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Coin Flip' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>{t('personalStats.coinFlip')}</button>
+              <button onClick={() => setActiveSubTab('Matchups')} style={{ padding: '6px 10px', background: activeSubTab === 'Matchups' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Matchups' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Matchups' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>{t('personalStats.matchups')}</button>
+              <select 
+                className="date-filter"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                style={{ marginLeft: '8px' }}
+              >
+                <option value="all">{t('personalStats.allTime')}</option>
+                {availableDates.map((date) => (
+                  <option key={date} value={date}>{date}</option>
+                ))}
+              </select>
             </div>
           )}
-          <div className="stat-item">
-            <span className="stat-label">{t('common:stats.record')}</span>
-            <span className="stat-value">
-              <span className="record-win">{userStats.wins}{t('common:common.win')}</span>
-              <span> - </span>
-              <span className="record-loss">{userStats.losses}{t('common:common.loss')}</span>
-            </span>
-          </div>
         </div>
-        
-        <div className="sidebar-divider"></div>
-        
-        <nav className="sidebar-nav">
-          {sessionData?.status !== 'archived' ? (
-            <button 
-              className={`sidebar-item ${activeTab === 'Submit' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Submit')}
-            >
-              {t('duelRecords:tabs.submit')}
-            </button>
-          ) : (
-            <button 
-              className={`sidebar-item ${activeTab === 'Browse' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Browse')}
-            >
-              {t('duelRecords:tabs.browse')}
-            </button>
-          )}
-          <button 
-            className={`sidebar-item ${activeTab === 'Personal Stats' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Personal Stats')}
-          >
-            {t('duelRecords:tabs.personalStats')}
-          </button>
-          <button 
-            className={`sidebar-item ${activeTab === 'Deck Winrates' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Deck Winrates')}
-          >
-            {t('duelRecords:tabs.deckWinrates')}
-          </button>
-          <button 
-            className={`sidebar-item ${activeTab === 'Matchup Matrix' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Matchup Matrix')}
-          >
-            {t('duelRecords:tabs.matchupMatrix')}
-          </button>
-          <button 
-            className={`sidebar-item ${activeTab === 'Duel History' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Duel History')}
-          >
-            {t('duelRecords:tabs.duelHistory')}
-          </button>
-          <button 
-            className={`sidebar-item ${activeTab === 'Leaderboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Leaderboard')}
-          >
-            {t('duelRecords:tabs.leaderboard')}
-          </button>
-        </nav>
-        
-        <div className="sidebar-footer">
-          <div className="sidebar-divider"></div>
-          <button className="back-btn" onClick={handleBackToLobby}>
-            {t('common:sidebar.backToLobby')}
-          </button>
+        <div style={{ paddingLeft: activeTab === 'matchup-matrix' ? '16px' : '32px', paddingRight: activeTab === 'matchup-matrix' ? '16px' : '32px', paddingBottom: activeTab === 'matchup-matrix' ? '16px' : '32px', marginLeft: '0' }}>
+{activeTab === 'submit' && <Submit />}
+          {activeTab === 'personal-stats' && <PersonalStats sessionData={sessionData} activeSubTab={activeSubTab} onSubTabChange={setActiveSubTab} dateFilter={dateFilter} setDateFilter={setDateFilter} availableDates={availableDates} setAvailableDates={setAvailableDates} />}
+          {activeTab === 'deck-winrate' && <DeckWinrates sessionId={sessionId} />}
+          {activeTab === 'matchup-matrix' && <MatchupMatrix />}
+          {activeTab === 'history' && <DuelHistory sessionId={sessionId} onDuelDeleted={null} />}
+          {activeTab === 'leaderboard' && <Leaderboard />}
         </div>
-      </aside>
-      
-      <main className="main-content">
-        {activeTab === 'Personal Stats' ? (
-          <PersonalStats sessionData={sessionData} />
-        ) : activeTab === 'Duel History' ? (
-          <DuelHistory sessionId={sessionId} onDuelDeleted={fetchUserStats} isArchived={sessionData?.status === 'archived'} />
-        ) : activeTab === 'Deck Winrates' ? (
-          <div className="content-body">
-            <DeckWinrates />
-          </div>
-        ) : activeTab === 'Matchup Matrix' ? (
-          <MatchupMatrix />
-        ) : activeTab === 'Leaderboard' ? (
-          <Leaderboard />
-        ) : activeTab === 'Browse' ? (
-          <div className="content-body">
-            <Browse sessionData={sessionData} />
-          </div>
-        ) : (
-          <>
-            {activeTab !== 'Submit' && activeTab !== 'Browse' && (
-              <header className="content-header">
-                <h1 className="content-title">{activeTab}</h1>
-              </header>
-            )}
-            <div className="content-body">
-              {activeTab === 'Submit' && <Submit onDuelSubmitted={fetchUserStats} />}
-            </div>
-          </>
-        )}
       </main>
-    </>
+      </div>
+  );
+}
+
+function DuelRecords() {
+  const { sessionId } = useParams();
+  const [activeTab, setActiveTab] = useState('submit');
+
+  return (
+    <SessionDataProvider sessionId={sessionId} activeTab={activeTab}>
+      <DuelRecordsContent />
+    </SessionDataProvider>
   );
 }
 

@@ -242,42 +242,42 @@ INSERT INTO ladder_tiers (tier_name, wins_required, can_demote_from, sort_order)
 ('Rookie 1', 1, true, 2),   -- Need 1 win to leave Rookie 1
 
 -- Bronze Tier (5 ranks) - 2 net wins each
-('Bronze 5', 2, true, 3),   -- Need 2 wins to leave Bronze 5
+('Bronze 5', 2, false, 3),  -- Need 2 wins to leave Bronze 5 (entry tier - can't demote)
 ('Bronze 4', 2, true, 4),   -- Need 2 wins to leave Bronze 4
 ('Bronze 3', 2, true, 5),   -- Need 2 wins to leave Bronze 3
 ('Bronze 2', 2, true, 6),   -- Need 2 wins to leave Bronze 2
 ('Bronze 1', 2, true, 7),   -- Need 2 wins to leave Bronze 1
 
 -- Silver Tier (5 ranks) - 2 wins for 5-4-3-2, 3 wins for 1
-('Silver 5', 2, true, 8),   -- Need 2 wins to leave Silver 5
+('Silver 5', 2, false, 8),  -- Need 2 wins to leave Silver 5 (entry tier - can't demote)
 ('Silver 4', 2, true, 9),   -- Need 2 wins to leave Silver 4
 ('Silver 3', 2, true, 10),  -- Need 2 wins to leave Silver 3
 ('Silver 2', 2, true, 11),  -- Need 2 wins to leave Silver 2
 ('Silver 1', 3, true, 12),  -- Need 3 wins to leave Silver 1
 
 -- Gold Tier (5 ranks) - 3 wins for 5-4-3-2, 4 wins for 1
-('Gold 5', 3, true, 13),    -- Need 3 wins to leave Gold 5
+('Gold 5', 3, false, 13),   -- Need 3 wins to leave Gold 5 (entry tier - can't demote)
 ('Gold 4', 3, true, 14),    -- Need 3 wins to leave Gold 4
 ('Gold 3', 3, true, 15),    -- Need 3 wins to leave Gold 3
 ('Gold 2', 3, true, 16),    -- Need 3 wins to leave Gold 2
 ('Gold 1', 4, true, 17),    -- Need 4 wins to leave Gold 1
 
 -- Platinum Tier (5 ranks) - 4 wins for 5-4-3-2, 5 wins for 1
-('Platinum 5', 4, true, 18), -- Need 4 wins to leave Platinum 5
+('Platinum 5', 4, false, 18), -- Need 4 wins to leave Platinum 5 (entry tier - can't demote)
 ('Platinum 4', 4, true, 19), -- Need 4 wins to leave Platinum 4
 ('Platinum 3', 4, true, 20), -- Need 4 wins to leave Platinum 3
 ('Platinum 2', 4, true, 21), -- Need 4 wins to leave Platinum 2
 ('Platinum 1', 5, true, 22), -- Need 5 wins to leave Platinum 1
 
 -- Diamond Tier (5 ranks) - 4 net wins each
-('Diamond 5', 4, true, 23),  -- Need 4 wins to leave Diamond 5
+('Diamond 5', 4, false, 23), -- Need 4 wins to leave Diamond 5 (entry tier - can't demote)
 ('Diamond 4', 4, true, 24),  -- Need 4 wins to leave Diamond 4
 ('Diamond 3', 4, true, 25),  -- Need 4 wins to leave Diamond 3
 ('Diamond 2', 4, true, 26),  -- Need 4 wins to leave Diamond 2
 ('Diamond 1', 4, true, 27),  -- Need 4 wins to leave Diamond 1
 
 -- Master Tier (5 ranks) - 5 net wins each
-('Master 5', 5, true, 28),   -- Need 5 wins to leave Master 5
+('Master 5', 5, false, 28),  -- Need 5 wins to leave Master 5 (entry tier - can't demote)
 ('Master 4', 5, true, 29),   -- Need 5 wins to leave Master 4
 ('Master 3', 5, true, 30),   -- Need 5 wins to leave Master 3
 ('Master 2', 5, true, 31),   -- Need 5 wins to leave Master 2

@@ -9,28 +9,48 @@ import DeckAnalysis from './DeckAnalysis';
 import CoinFlip from './CoinFlip';
 import Matchups from './Matchups';
 
-function PersonalStats({ sessionData, targetUserId = null }) {
+function PersonalStats({ sessionData, targetUserId = null, activeSubTab: propActiveSubTab = null, onSubTabChange: propOnSubTabChange = null, dateFilter: propDateFilter = null, availableDates: propAvailableDates = null, setAvailableDates: propSetAvailableDates = null }) {
   const { t } = useTranslation('duelRecords');
   const { sessionId } = useParams();
-  const [activeSubTab, setActiveSubTab] = useState('Overview');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [availableDates, setAvailableDates] = useState([]);
+  const [localActiveSubTab, setLocalActiveSubTab] = useState('Overview');
+  const activeSubTab = propActiveSubTab !== null ? propActiveSubTab : localActiveSubTab;
+  const setActiveSubTab = propOnSubTabChange || setLocalActiveSubTab;
+  const [localDateFilter, setLocalDateFilter] = useState('all');
+  const [localAvailableDates, setLocalAvailableDates] = useState([]);
+  const dateFilter = propDateFilter !== null ? propDateFilter : localDateFilter;
+  const availableDates = propAvailableDates !== null ? propAvailableDates : localAvailableDates;
+  const setAvailableDates = propSetAvailableDates || setLocalAvailableDates;
   const subscriptionRef = useRef(null);
+  const cacheInvalidatedRef = useRef(false); // Track if cache was invalidated by duel submission
 
   const showPointsTracker = sessionData?.gameMode === 'rated' || sessionData?.gameMode === 'duelist_cup';
 
   useEffect(() => {
     fetchAvailableDates();
-    subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
-      if (payload.eventType === 'INSERT') {
-        fetchAvailableDates();
-      }
-    });
+    
+    // DISABLED: Real-time subscription causes too many refetches
+    // Instead: Sub-tabs fetch on mount and use their own 5s cache
+    // subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
+    //   if (payload.eventType === 'INSERT') {
+    //     fetchAvailableDates();
+    //   }
+    // });
     
     return () => {
       if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
     };
   }, [sessionId, targetUserId]);
+  
+  // Listen for cache invalidation from parent (after duel submission)
+  useEffect(() => {
+    const handleCacheInvalidation = () => {
+      cacheInvalidatedRef.current = true;
+      console.log('🗑️ PersonalStats cache invalidated - next sub-tab switch will fetch fresh');
+    };
+    
+    window.addEventListener('personalStats:invalidateCache', handleCacheInvalidation);
+    return () => window.removeEventListener('personalStats:invalidateCache', handleCacheInvalidation);
+  }, []);
 
   const fetchAvailableDates = async () => {
     try {
@@ -53,54 +73,56 @@ function PersonalStats({ sessionData, targetUserId = null }) {
     }
   };
 
+  const isControlledByParent = propActiveSubTab !== null;
+
   return (
     <>
-      <header className="subtab-header">
-        <nav className="subtab-nav">
-          <button
-            className={`subtab-btn ${activeSubTab === 'Overview' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('Overview')}
-          >
-            {t('personalStats.overview')}
-          </button>
-          {showPointsTracker && (
+      {!isControlledByParent && <header className="subtab-header">
+          <nav className="subtab-nav">
             <button
-              className={`subtab-btn ${activeSubTab === 'Points Tracker' ? 'active' : ''}`}
-              onClick={() => setActiveSubTab('Points Tracker')}
+              className={`subtab-btn ${activeSubTab === 'Overview' ? 'active' : ''}`}
+              onClick={() => setActiveSubTab('Overview')}
             >
-              {t('personalStats.pointsTracker')}
+              {t('personalStats.overview')}
             </button>
-          )}
-          <button
-            className={`subtab-btn ${activeSubTab === 'Deck Analysis' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('Deck Analysis')}
+            {showPointsTracker && (
+              <button
+                className={`subtab-btn ${activeSubTab === 'Points Tracker' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('Points Tracker')}
+              >
+                {t('personalStats.pointsTracker')}
+              </button>
+            )}
+            <button
+              className={`subtab-btn ${activeSubTab === 'Deck Analysis' ? 'active' : ''}`}
+              onClick={() => setActiveSubTab('Deck Analysis')}
+            >
+              {t('personalStats.deckAnalysis')}
+            </button>
+            <button
+              className={`subtab-btn ${activeSubTab === 'Coin Flip' ? 'active' : ''}`}
+              onClick={() => setActiveSubTab('Coin Flip')}
+            >
+              {t('personalStats.coinFlip')}
+            </button>
+            <button
+              className={`subtab-btn ${activeSubTab === 'Matchups' ? 'active' : ''}`}
+              onClick={() => setActiveSubTab('Matchups')}
+            >
+              {t('personalStats.matchups')}
+            </button>
+          </nav>
+          <select 
+            className="date-filter"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
           >
-            {t('personalStats.deckAnalysis')}
-          </button>
-          <button
-            className={`subtab-btn ${activeSubTab === 'Coin Flip' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('Coin Flip')}
-          >
-            {t('personalStats.coinFlip')}
-          </button>
-          <button
-            className={`subtab-btn ${activeSubTab === 'Matchups' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('Matchups')}
-          >
-            {t('personalStats.matchups')}
-          </button>
-        </nav>
-        <select 
-          className="date-filter"
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-        >
-          <option value="all">{t('personalStats.allTime')}</option>
-          {availableDates.map((date) => (
-            <option key={date} value={date}>{date}</option>
-          ))}
+            <option value="all">{t('personalStats.allTime')}</option>
+            {availableDates.map((date) => (
+              <option key={date} value={date}>{date}</option>
+            ))}
         </select>
-      </header>
+      </header>}
 
       <div className="subtab-content">
         {activeSubTab === 'Overview' && <Overview sessionId={sessionId} dateFilter={dateFilter} targetUserId={targetUserId} />}

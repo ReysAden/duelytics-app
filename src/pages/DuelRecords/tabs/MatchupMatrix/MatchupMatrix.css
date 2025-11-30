@@ -13,8 +13,9 @@
 
 .matchup-btn {
   padding: 5px 10px;
-  background: transparent;
-  border: none;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.6);
   font-size: 13px;
   font-weight: 500;
@@ -47,7 +48,8 @@
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
 }
 
 .matrix-wrapper::-webkit-scrollbar {
@@ -177,6 +179,10 @@
   align-items: center;
   overflow: hidden;
   padding: 10px;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
 }
 
 .pie-chart {

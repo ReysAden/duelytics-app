@@ -10,13 +10,13 @@
   padding: 40px;
 }
 
-.deck-winrates-grid {
+.deck-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
 }
 
-.deck-winrate-card {
+.deck-card {
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 6px;
   overflow: hidden;
@@ -28,21 +28,36 @@
   min-height: 180px;
 }
 
-.deck-winrate-card:hover {
+.deck-card:hover {
   border-color: rgba(99, 102, 241, 0.6);
   box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
 }
 
-.deck-winrate-overlay {
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.7);
+.deck-overlay {
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
   height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-.deck-winrate-name {
-  font-size: 13px;
+.deck-stats-container {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.deck-card-name {
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 6px;
@@ -51,62 +66,46 @@
   text-overflow: ellipsis;
 }
 
-.winrate-section {
-  margin-bottom: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.winrate-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.winrate-value {
-  font-size: 20px;
+.deck-winrate {
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 1px;
-  line-height: 1;
+  margin-bottom: 4px;
 }
 
-.winrate-games {
-  font-size: 10px;
+.deck-stats-row {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
 }
 
-.turn-winrates {
+.deck-record {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 6px;
+}
+
+.deck-wins {
+  color: #4ade80;
+}
+
+.deck-losses {
+  color: #f87171;
+}
+
+.deck-turn-stats {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  font-size: 11px;
 }
 
-.turn-winrate-item {
+.turn-stat {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
-.turn-winrate-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.turn-winrate-stats {
-  flex: 1;
-  min-width: 0;
-}
-
-.turn-winrate-value {
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.turn-winrate-games {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.5);
+.turn-stat-icon {
+  width: 12px;
+  height: 12px;
 }

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duel Overlay</title>
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+  <div class="overlay-header">
+    <div class="session-header-name" id="sessionName">Loading...</div>
+    <div class="drag-area"></div>
+    <div class="header-controls">
+      <button class="header-btn" id="minimizeBtn">−</button>
+      <button class="header-btn close-btn" id="closeBtn">✕</button>
+    </div>
+  </div>
+  
+  <div class="overlay-content" id="content">
+    <div class="form-container">
+      <form id="duelForm">
+        <!-- Row 1: Your Deck and Opponent's Deck -->
+        <div class="form-row">
+          <div class="form-field">
+            <label data-i18n="submit.yourDeck">Your Deck</label>
+            <div class="combobox">
+              <input type="text" id="yourDeck" class="field-select" placeholder="Search your deck..." autocomplete="off" data-i18n-placeholder="submit.searchYourDeck">
+              <div class="dropdown" id="yourDeckDropdown"></div>
+            </div>
+          </div>
+          
+          <div class="form-field">
+            <label data-i18n="submit.opponentDeck">Opponent's Deck</label>
+            <div class="combobox">
+              <input type="text" id="oppDeck" class="field-select" placeholder="Search opponent's deck..." autocomplete="off" data-i18n-placeholder="submit.searchOpponentDeck">
+              <div class="dropdown" id="oppDeckDropdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Coin Flip -->
+        <div class="form-field">
+          <label data-i18n="submit.coinFlip">Coin Flip</label>
+          <div class="button-group">
+            <button type="button" class="btn" data-field="coinFlip" data-value="win" data-i18n="submit.won">Win</button>
+            <button type="button" class="btn" data-field="coinFlip" data-value="loss" data-i18n="submit.lost">Loss</button>
+          </div>
+        </div>
+
+        <!-- Row 3: Turn Order -->
+        <div class="form-field">
+          <label data-i18n="submit.turnOrder">Turn Order</label>
+          <div class="button-group">
+            <button type="button" class="btn" data-field="turnOrder" data-value="first" data-i18n="submit.first">First</button>
+            <button type="button" class="btn" data-field="turnOrder" data-value="second" data-i18n="submit.second">Second</button>
+          </div>
+        </div>
+
+        <!-- Row 4: Match Result -->
+        <div class="form-field">
+          <label data-i18n="submit.matchResult">Match Result</label>
+          <div class="button-group">
+            <button type="button" class="btn btn-win" data-field="matchResult" data-value="win" data-i18n="submit.win">Win</button>
+            <button type="button" class="btn btn-loss" data-field="matchResult" data-value="loss" data-i18n="submit.loss">Loss</button>
+          </div>
+        </div>
+
+        <!-- Row 5: Rating Change (conditional) -->
+        <div class="form-field" id="ratingField" style="display: none;">
+          <label data-i18n="submit.ratingChange">Rating Change</label>
+          <input type="number" id="ratingChange" placeholder="Optional" step="0.01" data-i18n-placeholder="submit.ratingChange">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn" id="submitBtn" disabled data-i18n="submit.submitting">Submit</button>
+      </form>
+    </div>
+  </div>
+  
+  <script src="overlay.js"></script>
+</body>
+</html>

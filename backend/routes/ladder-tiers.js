@@ -1,5 +1,5 @@
 const express = require('express')
-const { supabaseAdmin } = require('../database')
+const { supabaseAdmin } = require('../config/database')
 
 const router = express.Router()
 

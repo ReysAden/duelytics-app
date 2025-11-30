@@ -4,10 +4,71 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <title>Duelytics</title>
+
+    <!-- Preload background early -->
+    <script type="module">
+      // Get user's background from localStorage and preload it
+      const storedBg = localStorage.getItem('user_background');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://onamlvzviwqkqlaejlra.supabase.co';
+      const defaultBg = `${supabaseUrl}/storage/v1/object/public/backgrounds/Default_Background.jpg`;
+      const bgToUse = storedBg || defaultBg;
+      
+      // Inject preload link for the actual background to use
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.as = 'image';
+      preloadLink.href = bgToUse;
+      document.head.appendChild(preloadLink);
+      
+      // Store in a variable that CSS can't access, but our inline script below will use
+      window.__INITIAL_BACKGROUND__ = bgToUse;
+    </script>
+    <!-- Critical CSS to prevent white flash -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0a0a14;
+        /* Background will be set by inline script below */
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+        background-color: transparent;
+      }
+      /* Loading spinner styles */
+      .loading-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background-color: #0a0a14;
+      }
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- Apply user's background immediately (before React loads) -->
+    <script>
+      if (window.__INITIAL_BACKGROUND__) {
+        document.body.style.backgroundImage = "url('" + window.__INITIAL_BACKGROUND__ + "')";
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

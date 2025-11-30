@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import './ManageSessions.css';
 
 function ManageSessions() {
+  const { t } = useTranslation(['common']);
   const [activeSessions, setActiveSessions] = useState([]);
   const [archivedSessions, setArchivedSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
@@ -41,7 +43,7 @@ function ManageSessions() {
       if (activeData.sessions) setActiveSessions(activeData.sessions);
       if (archivedData.sessions) setArchivedSessions(archivedData.sessions);
     } catch (err) {
-      setError('Failed to load sessions');
+      setError(t('ui.failedLoadSessions'));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ function ManageSessions() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('Not authenticated');
+        setError(t('common.notAuthenticated'));
         return;
       }
 
@@ -68,15 +70,15 @@ function ManageSessions() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to archive session');
+        throw new Error(data.error || t('ui.failedArchiveSession'));
       }
 
-      setSuccess('Archived!');
+      setSuccess(t('ui.archived'));
       setSelectedSession('');
       setSelectedStatus('');
       fetchSessions(); // Refresh list
     } catch (err) {
-      setError(err.message || 'Failed to archive session');
+      setError(err.message || t('ui.failedArchiveSession'));
     }
   };
 
@@ -91,7 +93,7 @@ function ManageSessions() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('Not authenticated');
+        setError(t('common.notAuthenticated'));
         return;
       }
 
@@ -106,17 +108,17 @@ function ManageSessions() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete session');
+        throw new Error(data.error || t('ui.failedDeleteSession'));
       }
 
-      setSuccess('Deleted!');
+      setSuccess(t('ui.deleted'));
       setSelectedSession('');
       setSelectedStatus('');
       setShowDeleteModal(false);
       setDeleteAction(null);
       fetchSessions();
     } catch (err) {
-      setError(err.message || 'Failed to delete session');
+      setError(err.message || t('ui.failedDeleteSession'));
     }
   };
 
@@ -126,7 +128,7 @@ function ManageSessions() {
   };
 
   if (loading) {
-    return <div className="manage-sessions">Loading sessions...</div>;
+    return <div className="manage-sessions">{t('ui.loadingSessions')}</div>;
   }
 
   const selectedSessionData = [...activeSessions, ...archivedSessions].find(s => s.id === parseInt(selectedSession));
@@ -145,7 +147,7 @@ function ManageSessions() {
             <span className="dropdown-label">
               {selectedSessionData
                 ? `${selectedSessionData.name} (${selectedSessionData.game_mode})`
-                : 'Choose a session...'
+                : t('ui.chooseSession')
               }
             </span>
             <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -157,7 +159,7 @@ function ManageSessions() {
             <div className="dropdown-panel" role="menu" aria-hidden={!showDropdown}>
               <ul className="dropdown-list">
                 {allSessions.length === 0 ? (
-                  <li className="dropdown-empty">No sessions available</li>
+                  <li className="dropdown-empty">{t('ui.noSessionsAvailable')}</li>
                 ) : (
                   allSessions.map((session) => (
                     <li key={session.id} role="menuitem">
@@ -170,7 +172,7 @@ function ManageSessions() {
                         }}
                       >
                         <div className="session-name">{session.name}</div>
-                        <div className="session-mode">Mode: {session.game_mode} • {session.status}</div>
+                        <div className="session-mode">{t('ui.mode')}: {session.game_mode} • {session.status}</div>
                       </button>
                     </li>
                   ))
@@ -185,11 +187,11 @@ function ManageSessions() {
         <div className="action-buttons">
           {selectedStatus === 'active' && (
             <button className="action-btn archive-btn" onClick={handleArchive}>
-              Archive
+              {t('ui.archive')}
             </button>
           )}
           <button className="action-btn session-delete-btn" onClick={handleDelete}>
-            Delete
+            {t('ui.delete')}
           </button>
         </div>
       )}
@@ -197,21 +199,21 @@ function ManageSessions() {
       {showDeleteModal && deleteAction === 'delete' && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Session</h3>
-            <p>Are you sure you want to delete this session? This cannot be undone.</p>
+            <h3>{t('ui.deleteSession')}</h3>
+            <p>{t('ui.confirmDeleteSession')}</p>
             
             <div className="modal-actions">
               <button 
                 className="cancel-btn" 
                 onClick={cancelDelete}
               >
-                Cancel
+                {t('ui.cancel')}
               </button>
               <button 
                 className="delete-confirm-btn" 
                 onClick={confirmDelete}
               >
-                Delete
+                {t('ui.delete')}
               </button>
             </div>
           </div>

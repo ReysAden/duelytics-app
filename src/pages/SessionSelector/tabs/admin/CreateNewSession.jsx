@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import './CreateNewSession.css';
 
@@ -9,6 +10,7 @@ const GAME_MODES = [
 ];
 
 function CreateNewSession() {
+  const { t } = useTranslation(['common']);
   const [sessionName, setSessionName] = useState('');
   const [gameMode, setGameMode] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -29,13 +31,13 @@ function CreateNewSession() {
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('Not authenticated');
+        setError(t('common.notAuthenticated'));
         return;
       }
 
       // Validate inputs
       if (!sessionName || !gameMode || !startTime || !endTime) {
-        setError('Please fill out all fields');
+        setError(t('ui.fillOutAllFields'));
         return;
       }
 
@@ -63,17 +65,17 @@ function CreateNewSession() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create session');
+        throw new Error(data.error || t('ui.failedCreateSession'));
       }
 
-      setSuccess('Created!');
+      setSuccess(t('ui.created'));
       // Reset form
       setSessionName('');
       setGameMode('');
       setStartTime('');
       setEndTime('');
     } catch (err) {
-      setError(err.message || 'Failed to create session');
+      setError(err.message || t('ui.failedCreateSession'));
     } finally {
       setLoading(false);
     }
@@ -94,7 +96,7 @@ function CreateNewSession() {
               id="sessionName"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              placeholder="Session Name"
+              placeholder={t('ui.sessionName')}
             />
           </div>
 
@@ -106,7 +108,7 @@ function CreateNewSession() {
                 onBlur={() => setTimeout(() => setShowGameModeDropdown(false), 200)}
               >
                 <span className="dropdown-label">
-                  {selectedModeLabel || 'Select game mode'}
+                  {selectedModeLabel || t('ui.selectGameMode')}
                 </span>
                 <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
@@ -154,7 +156,7 @@ function CreateNewSession() {
           </div>
 
           <button type="submit" className="submit-btn" disabled={loading || !sessionName || !gameMode || !startTime || !endTime}>
-            {loading ? 'Creating...' : 'Create Session'}
+            {loading ? t('ui.creating') : t('ui.createSession')}
           </button>
         </form>
       </div>

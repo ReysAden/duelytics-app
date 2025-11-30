@@ -1,11 +1,12 @@
 const express = require('express')
-const { supabaseAdmin } = require('../database')
-const { authenticate } = require('../auth')
+const { supabaseAdmin, createClient } = require('../config/database')
+const { authenticate } = require('../middleware/auth')
+const { duelSubmitLimiter, duelDeleteLimiter } = require('../middleware/rateLimiter')
 
 const router = express.Router()
 
 // Submit duel
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, duelSubmitLimiter, async (req, res) => {
   const {
     sessionId,
     playerDeckId,
@@ -42,7 +43,7 @@ router.post('/', authenticate, async (req, res) => {
       pointsChange = result === 'win' ? Math.abs(ratingValue) : -Math.abs(ratingValue)
     }
 
-    // Insert duel
+    // Insert duel (use supabaseAdmin to avoid RLS recursion issues)
     const { data: duel, error } = await supabaseAdmin
       .from('duels')
       .insert({
@@ -58,7 +59,12 @@ router.post('/', authenticate, async (req, res) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Duel insert error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Duel inserted with ID:', duel.id, 'session_id:', duel.session_id);
 
     // Update player stats using RPC based on game mode
     const rpcFunction = session.game_mode === 'ladder' 
@@ -146,7 +152,88 @@ router.get('/session/:sessionId/user', authenticate, async (req, res) => {
   res.json({ duels: data })
 })
 
-// Delete duel
+// Delete last duel for user in session
+router.delete('/last', authenticate, duelDeleteLimiter, async (req, res) => {
+  try {
+    const { sessionId } = req.query
+    if (!sessionId) return res.status(400).json({ error: 'Session ID required' })
+
+    // Get user's last duel in this session
+    const { data: lastDuel } = await supabaseAdmin
+      .from('duels')
+      .select('id, user_id, session_id, result, points_change')
+      .eq('session_id', sessionId)
+      .eq('user_id', req.user.discord_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (!lastDuel) return res.status(404).json({ error: 'No duels found' })
+
+    // Delete duel
+    const { error: deleteError } = await supabaseAdmin
+      .from('duels')
+      .delete()
+      .eq('id', lastDuel.id)
+
+    if (deleteError) throw deleteError
+
+    // Recalculate stats from all remaining duels
+    const { data: remainingDuels } = await supabaseAdmin
+      .from('duels')
+      .select('result, points_change')
+      .eq('session_id', lastDuel.session_id)
+      .eq('user_id', lastDuel.user_id)
+      .order('created_at', { ascending: true })
+
+    // Get session info
+    const { data: session } = await supabaseAdmin
+      .from('sessions')
+      .select('game_mode, starting_rating')
+      .eq('id', lastDuel.session_id)
+      .single()
+
+    // Calculate totals
+    const totalGames = remainingDuels?.length || 0
+    const totalWins = remainingDuels?.filter(d => d.result === 'win').length || 0
+    
+    let currentPoints = 0
+    if (session.game_mode === 'rated') {
+      currentPoints = session.starting_rating || 1500
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    } else if (session.game_mode === 'duelist_cup') {
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    } else if (session.game_mode === 'ladder') {
+      remainingDuels?.forEach(d => {
+        currentPoints += parseFloat(d.points_change || 0)
+      })
+    }
+
+    // Update player stats
+    const { error: updateError } = await supabaseAdmin
+      .from('player_session_stats')
+      .update({
+        total_games: totalGames,
+        total_wins: totalWins,
+        current_points: currentPoints,
+        updated_at: new Date().toISOString()
+      })
+      .eq('session_id', lastDuel.session_id)
+      .eq('user_id', lastDuel.user_id)
+
+    if (updateError) throw updateError
+
+    res.json({ success: true, message: 'Last duel deleted and stats recalculated' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Delete duel by ID
 router.delete('/:duelId', authenticate, async (req, res) => {
   try {
     const { duelId } = req.params

@@ -12,6 +12,8 @@ import koCommon from './locales/ko/common.json';
 import koDuelRecords from './locales/ko/duelRecords.json';
 import esCommon from './locales/es/common.json';
 import esDuelRecords from './locales/es/duelRecords.json';
+import deCommon from './locales/de/common.json';
+import deDuelRecords from './locales/de/duelRecords.json';
 
 const resources = {
   en: {
@@ -33,6 +35,10 @@ const resources = {
   es: {
     common: esCommon,
     duelRecords: esDuelRecords
+  },
+  de: {
+    common: deCommon,
+    duelRecords: deDuelRecords
   }
 };
 

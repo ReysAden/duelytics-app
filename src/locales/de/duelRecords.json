@@ -1,0 +1,68 @@
+{
+  "tabs": {
+    "submit": "Eingabe",
+    "browse": "Durchsuchen",
+    "personalStats": "Eigene Statistiken",
+    "deckWinrates": "Deck Siegesrate",
+    "matchupMatrix": "Gegnerdeck Matrix",
+    "duelHistory": "Duellverlauf",
+    "leaderboard": "Leaderboard"
+  },
+  "submit": {
+    "yourDeck": "Dein Deck",
+    "opponentDeck": "Deck des Gegners",
+    "coinFlip": "Münzwurf",
+    "won": "Gewonnen",
+    "lost": "Verloren",
+    "turnOrder": "Spielzugreinfolge",
+    "first": "Als Erster",
+    "second": "Als Zweiter",
+    "matchResult": "Matchergebniss",
+    "win": "Sieg",
+    "loss": "Niederlage",
+    "ratingChange": "Ratingwechsel",
+    "submitting": "Eingabe....",
+    "searchYourDeck": "Durchsuche dein Deck...",
+    "searchOpponentDeck": "Durchsuche Gegnerdeck...."
+  },
+  "browse": {
+    "title": "Durchsuche Gegnerstatistiken",
+    "subtitle": "Wähle ein Spieler um seine Statistiken von dieser Sitzung anzusehen",
+    "searchUser": "Nach einen Benutzer Suchen...",
+    "noParticipants": "Kein Benutzer für diese Sitzung gefunden",
+    "backToBrowse": "zurück zum Durchsuchen",
+    "viewingStats": "Folgende Statistiken ansehen:"
+  },
+  "personalStats": {
+    "overview": "Übersicht",
+    "pointsTracker": "Punkte Tracker",
+    "deckAnalysis": "Deckanalyse",
+    "coinFlip": "Münzwurf",
+    "matchups": "Matchups",
+    "allTime": "Gesamt"
+  },
+  "duelHistory": {
+    "date": "Datum",
+    "yourDeck": "Dein Deck",
+    "oppDeck": "Gegnerdeck",
+    "coin": "Münzwurf",
+    "turn": "Züge",
+    "result": "Ergebnisse",
+    "total": "Gesamt",
+    "noDuels": "Keine Duell gefunden"
+  },
+  "leaderboard": {
+    "rank": "Rang",
+    "player": "Spieler",
+    "points": "Punkte",
+    "tier": "Abschnitt",
+    "games": "Spiele",
+    "topDeck": "Besten Decks",
+    "overall": "Gesamt",
+    "first": "Erster",
+    "second": "Zweiter",
+    "hideMyStats": "Meine Statistiken ausblenden",
+    "showMyStats": "Meine Statistiken anzeigen",
+    "hidden": "Versteckt"
+  }
+}

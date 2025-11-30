@@ -1,16 +1,33 @@
 import './Submit.css';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
+import { useSessionData } from '../../../contexts/SessionDataContext';
 
 function Submit({ onDuelSubmitted }) {
+  const { t } = useTranslation(['duelRecords']);
   const { sessionId } = useParams();
+  const { 
+    invalidateCache, 
+    fetchUserStatsImmediate,
+    fetchLeaderboardImmediate,
+    fetchDuelsImmediate,
+    fetchDeckWinratesImmediate,
+    fetchPersonalOverviewImmediate,
+    fetchPersonalDeckAnalysisImmediate,
+    fetchPersonalMatchupsImmediate,
+    fetchMatchupsImmediate
+  } = useSessionData();
   const [sessionData, setSessionData] = useState(null);
   const [decks, setDecks] = useState([]);
   const [yourDeckSearch, setYourDeckSearch] = useState('');
   const [oppDeckSearch, setOppDeckSearch] = useState('');
   const [showYourDeckDropdown, setShowYourDeckDropdown] = useState(false);
   const [showOppDeckDropdown, setShowOppDeckDropdown] = useState(false);
+  const [showCoinFlipDropdown, setShowCoinFlipDropdown] = useState(false);
+  const [showTurnOrderDropdown, setShowTurnOrderDropdown] = useState(false);
   const [formData, setFormData] = useState({
     yourDeck: null,
     opponentDeck: null,
@@ -99,7 +116,7 @@ function Submit({ onDuelSubmitted }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('You must be logged in to submit a duel');
+        toast.error('You must be logged in to submit a duel');
         setIsSubmitting(false);
         return;
       }
@@ -126,7 +143,36 @@ function Submit({ onDuelSubmitted }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Duel submitted successfully!');
+        console.log('✅ Duel submitted successfully via REST API:', data);
+        
+        // Invalidate cache
+        invalidateCache([
+          'leaderboard', 
+          'duels', 
+          'userStats', 
+          'matchups', 
+          'deckWinrates',
+          'personalOverview',
+          'personalDeckAnalysis',
+          'personalMatchups'
+        ]);
+        
+        // Immediately refetch user stats for sidebar
+        fetchUserStatsImmediate();
+        
+        // Force refetch all data in background so tabs show fresh data immediately when clicked
+        setTimeout(() => {
+          console.log('🔄 Background refetch after duel submission');
+          fetchLeaderboardImmediate();
+          fetchDuelsImmediate();
+          fetchDeckWinratesImmediate();
+          fetchPersonalOverviewImmediate();
+          fetchPersonalDeckAnalysisImmediate();
+          fetchPersonalMatchupsImmediate();
+          fetchMatchupsImmediate(); // Matchup Matrix (session-wide)
+        }, 100);
+        
+        toast.success('Duel submitted successfully!');
         const lastDeck = formData.yourDeck;
         setFormData({
           yourDeck: lastDeck,
@@ -140,11 +186,12 @@ function Submit({ onDuelSubmitted }) {
         setOppDeckSearch('');
         if (onDuelSubmitted) onDuelSubmitted();
       } else {
-        alert(data.error || 'Failed to submit duel');
+        console.error('❌ Duel submission failed:', data);
+        toast.error(data.message || data.error || 'Failed to submit duel');
       }
     } catch (err) {
       console.error('Failed to submit duel:', err);
-      alert('An error occurred while submitting the duel');
+      toast.error('An error occurred while submitting the duel');
     } finally {
       setIsSubmitting(false);
     }
@@ -165,9 +212,11 @@ function Submit({ onDuelSubmitted }) {
   const handleOpenOverlay = async () => {
     if (window.electronAPI?.overlay?.open) {
       const { data: { session } } = await supabase.auth.getSession();
+      const language = localStorage.getItem('language') || 'en';
       await window.electronAPI.overlay.open({
         sessionId,
-        authToken: session?.access_token
+        authToken: session?.access_token,
+        language
       });
     }
   };
@@ -176,7 +225,7 @@ function Submit({ onDuelSubmitted }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('You must be logged in');
+        toast.error('You must be logged in');
         return;
       }
 
@@ -188,14 +237,15 @@ function Submit({ onDuelSubmitted }) {
       });
 
       if (response.ok) {
-        alert('Last duel deleted');
+        toast.success('Last duel deleted');
         if (onDuelSubmitted) onDuelSubmitted();
       } else {
-        alert('Failed to delete duel');
+        const data = await response.json();
+        toast.error(data.message || data.error || 'Failed to delete duel');
       }
     } catch (err) {
       console.error('Delete error:', err);
-      alert('An error occurred');
+      toast.error('An error occurred');
     }
   };
 
@@ -204,12 +254,11 @@ function Submit({ onDuelSubmitted }) {
       <div className="submit-form">
         <div className="form-row">
           <div className="form-field">
-            <label className="field-label">Your Deck *</label>
             <div className="combobox">
               <input
                 type="text"
                 className="field-select"
-                placeholder={formData.yourDeck ? formData.yourDeck.name : "Search your deck..."}
+                placeholder={formData.yourDeck ? formData.yourDeck.name : t('submit.searchYourDeck')}
                 value={yourDeckSearch}
                 onChange={(e) => setYourDeckSearch(e.target.value)}
                 onClick={() => {
@@ -217,6 +266,7 @@ function Submit({ onDuelSubmitted }) {
                   setShowOppDeckDropdown(false);
                 }}
                 onBlur={() => setTimeout(() => setShowYourDeckDropdown(false), 200)}
+                style={formData.yourDeck ? { backgroundImage: `url(${formData.yourDeck.image_url})` } : {}}
               />
               <svg className={`dropdown-icon ${showYourDeckDropdown ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -243,12 +293,11 @@ function Submit({ onDuelSubmitted }) {
           </div>
 
           <div className="form-field">
-            <label className="field-label">Opponent's Deck *</label>
             <div className="combobox">
               <input
                 type="text"
                 className="field-select"
-                placeholder={formData.opponentDeck ? formData.opponentDeck.name : "Search opponent's deck..."}
+                placeholder={formData.opponentDeck ? formData.opponentDeck.name : t('submit.searchOpponentDeck')}
                 value={oppDeckSearch}
                 onChange={(e) => setOppDeckSearch(e.target.value)}
                 onClick={() => {
@@ -256,6 +305,7 @@ function Submit({ onDuelSubmitted }) {
                   setShowYourDeckDropdown(false);
                 }}
                 onBlur={() => setTimeout(() => setShowOppDeckDropdown(false), 200)}
+                style={formData.opponentDeck ? { backgroundImage: `url(${formData.opponentDeck.image_url})` } : {}}
               />
               <svg className={`dropdown-icon ${showOppDeckDropdown ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -283,73 +333,121 @@ function Submit({ onDuelSubmitted }) {
 
         <div className="form-row">
           <div className="form-field">
-            <label className="field-label">Coin Flip *</label>
-            <div className="button-group">
-              <button
-                type="button"
-                className={`choice-btn ${formData.coinFlip === 'win' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, coinFlip: 'win' }))}
-              >
-                <img src="/heads-coin.png" alt="Win" className="btn-icon" />
-                Win
-              </button>
-              <button
-                type="button"
-                className={`choice-btn ${formData.coinFlip === 'loss' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, coinFlip: 'loss' }))}
-              >
-                <img src="/tails-coin.png" alt="Loss" className="btn-icon" />
-                Loss
-              </button>
+            <div className="combobox">
+              <input
+                type="text"
+                className="field-select"
+                placeholder={formData.coinFlip ? (formData.coinFlip === 'win' ? `${t('submit.coinFlip')}: ${t('submit.won')}` : `${t('submit.coinFlip')}: ${t('submit.lost')}`) : t('submit.coinFlip')}
+                onClick={() => {
+                  setShowCoinFlipDropdown(!showCoinFlipDropdown);
+                  setShowYourDeckDropdown(false);
+                  setShowOppDeckDropdown(false);
+                }}
+                onBlur={() => setTimeout(() => setShowCoinFlipDropdown(false), 200)}
+                readOnly
+              />
+              <svg className={`dropdown-icon ${showCoinFlipDropdown ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {showCoinFlipDropdown && (
+                <div className="dropdown">
+                  <div
+                    className="dropdown-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseDown={() => {
+                      setFormData(prev => ({ ...prev, coinFlip: 'win' }));
+                      setShowCoinFlipDropdown(false);
+                    }}
+                  >
+                    <img src="/heads-coin.png" alt="Heads" style={{ width: '20px', height: '20px' }} />
+                    {t('submit.won')}
+                  </div>
+                  <div
+                    className="dropdown-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseDown={() => {
+                      setFormData(prev => ({ ...prev, coinFlip: 'loss' }));
+                      setShowCoinFlipDropdown(false);
+                    }}
+                  >
+                    <img src="/tails-coin.png" alt="Tails" style={{ width: '20px', height: '20px' }} />
+                    {t('submit.lost')}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="form-field">
-            <label className="field-label">Turn Order *</label>
-            <div className="button-group">
-              <button
-                type="button"
-                className={`choice-btn ${formData.turnOrder === 'first' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, turnOrder: 'first' }))}
-              >
-                <img src="/first.svg" alt="First" className="btn-icon" />
-                First
-              </button>
-              <button
-                type="button"
-                className={`choice-btn ${formData.turnOrder === 'second' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, turnOrder: 'second' }))}
-              >
-                <img src="/second.svg" alt="Second" className="btn-icon" />
-                Second
-              </button>
+            <div className="combobox">
+              <input
+                type="text"
+                className="field-select"
+                placeholder={formData.turnOrder ? (formData.turnOrder === 'first' ? t('submit.first') : t('submit.second')) : t('submit.turnOrder')}
+                onClick={() => {
+                  setShowTurnOrderDropdown(!showTurnOrderDropdown);
+                  setShowYourDeckDropdown(false);
+                  setShowOppDeckDropdown(false);
+                  setShowCoinFlipDropdown(false);
+                }}
+                onBlur={() => setTimeout(() => setShowTurnOrderDropdown(false), 200)}
+                readOnly
+              />
+              <svg className={`dropdown-icon ${showTurnOrderDropdown ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {showTurnOrderDropdown && (
+                <div className="dropdown">
+                  <div
+                    className="dropdown-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseDown={() => {
+                      setFormData(prev => ({ ...prev, turnOrder: 'first' }));
+                      setShowTurnOrderDropdown(false);
+                    }}
+                  >
+                    <img src="/first.svg" alt="First" style={{ width: '20px', height: '20px' }} />
+                    {t('submit.first')}
+                  </div>
+                  <div
+                    className="dropdown-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseDown={() => {
+                      setFormData(prev => ({ ...prev, turnOrder: 'second' }));
+                      setShowTurnOrderDropdown(false);
+                    }}
+                  >
+                    <img src="/second.svg" alt="Second" style={{ width: '20px', height: '20px' }} />
+                    {t('submit.second')}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         <div className="form-field">
-          <label className="field-label">Match Result *</label>
           <div className="button-group">
             <button
               type="button"
               className={`result-btn win ${formData.matchResult === 'win' ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, matchResult: 'win' }))}
             >
-              Win
+              {t('submit.win')}
             </button>
             <button
               type="button"
               className={`result-btn loss ${formData.matchResult === 'loss' ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, matchResult: 'loss' }))}
             >
-              Loss
+              {t('submit.loss')}
             </button>
           </div>
         </div>
 
         {showRatingChange && (
           <div className="form-field">
-            <label className="field-label">Rating Change</label>
+            <label className="field-label">{t('submit.ratingChange')}</label>
             <input
               type="number"
               step="0.01"
@@ -368,21 +466,12 @@ function Submit({ onDuelSubmitted }) {
             onClick={handleSubmit}
             disabled={!isFormValid() || isSubmitting}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? t('submit.submitting') : t('tabs.submit')}
           </button>
           <button
             type="button"
-            className="submit-btn"
-            onClick={handleOpenOverlay}
-            style={{ flex: '0 0 auto' }}
-          >
-            Overlay
-          </button>
-          <button
-            type="button"
-            className="submit-btn"
+            className="delete-btn"
             onClick={handleDeleteLastDuel}
-            style={{ flex: '0 0 auto', background: 'rgb(239, 68, 68)' }}
           >
             Delete Last
           </button>

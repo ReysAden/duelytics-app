@@ -1,95 +1,27 @@
 import { supabase } from './lib/supabase'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { Background } from './components/Background'
 import SessionSelector from './pages/SessionSelector/SessionSelector'
 import DuelRecords from './pages/DuelRecords/DuelRecords'
+import ArchiveDuelRecords from './pages/DuelRecords/ArchiveDuelRecords'
+import DiscordVerification from './pages/DiscordVerification/DiscordVerification'
 import Titlebar from './components/Titlebar'
+import { useAuth } from './contexts/AuthContext'
+import UpdateNotification from './components/UpdateNotification'
+import { useBackgroundPreference } from './hooks/useBackgroundPreference'
 
 function App() {
   const { t } = useTranslation(['common'])
-  const [user, setUser] = useState(null)
-  const [userRoles, setUserRoles] = useState({ isAdmin: false, isSupporter: false })
-  const [loading, setLoading] = useState(true)
   const [loginLoading, setLoginLoading] = useState(false)
   const [backgroundUrl, setBackgroundUrl] = useState('https://onamlvzviwqkqlaejlra.supabase.co/storage/v1/object/public/backgrounds/Default_Background.jpg')
-
-  // Function to sync user roles from backend
-  const syncUserRoles = async (session) => {
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/sync', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      const data = await response.json()
-      
-      if (data.user) {
-        setUserRoles({
-          isAdmin: data.user.is_admin || false,
-          isSupporter: data.user.is_supporter || false
-        })
-      }
-    } catch (error) {
-      console.error('Failed to sync user roles:', error)
-    }
-  }
-
-  useEffect(() => {
-    // Handle OAuth callback manually
-    const handleAuthCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      
-      // Check if we have OAuth callback params
-      if (urlParams.get('code') || hashParams.get('access_token')) {
-        try {
-          const { data, error } = await supabase.auth.getSession()
-          
-          if (data.session) {
-            setUser(data.session.user)
-            await syncUserRoles(data.session)
-            window.history.replaceState({}, document.title, window.location.pathname)
-            setLoading(false)
-            return
-          }
-        } catch (err) {
-          console.error('Session recovery error:', err)
-        }
-      }
-      
-      // Regular session check
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        await syncUserRoles(session)
-      }
-      
-      setUser(session?.user ?? null)
-      setLoading(false)
-    }
-    
-    handleAuthCallback()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        syncUserRoles(session)
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        setUserRoles({ isAdmin: false, isSupporter: false })
-      }
-      
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { user, userRoles, loading } = useAuth()
+  
+  // Fetch and cache user's background preference on login
+  useBackgroundPreference(user)
 
   const handleDiscordLogin = async () => {
     setLoginLoading(true)
@@ -110,16 +42,16 @@ function App() {
     } catch (error) {
       console.error('Login failed:', error)
       setLoginLoading(false)
-      alert('Login failed: ' + error.message)
+      toast.error('Login failed: ' + error.message)
     }
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-950 to-slate-900">
-        <div className="flex flex-col items-center gap-6">
-          <div className="w-16 h-16 border-4 border-slate-700 border-t-white rounded-full animate-spin"></div>
-          <h1 className="text-3xl font-bold text-white tracking-wide">Duelytics</h1>
+      <div className="loading-container">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+          <div className="loading-spinner" style={{ width: '64px', height: '64px' }}></div>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff', letterSpacing: '0.05em' }}>Duelytics</h1>
         </div>
       </div>
     )
@@ -128,14 +60,38 @@ function App() {
   if (user) {
     return (
       <>
+        <Toaster position="top-right" toastOptions={{
+          style: {
+            background: 'rgba(10, 10, 20, 0.95)',
+            color: '#fff',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)'
+          },
+          success: {
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#0a0a14'
+            }
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#0a0a14'
+            }
+          }
+        }} />
         <Background backgroundUrl={backgroundUrl} />
+        <UpdateNotification />
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, height: '32px' }}>
           <Titlebar />
         </div>
         <Router>
           <Routes>
-            <Route path="/" element={<SessionSelector user={user} userRoles={userRoles} />} />
+            <Route path="/verify-discord" element={<DiscordVerification />} />
+            <Route path="/sessions" element={<SessionSelector user={user} userRoles={userRoles} />} />
+            <Route path="/" element={<Navigate to="/verify-discord" replace />} />
             <Route path="/session/:sessionId" element={<DuelRecords />} />
+            <Route path="/archive/:sessionId" element={<ArchiveDuelRecords />} />
           </Routes>
         </Router>
       </>
@@ -144,6 +100,26 @@ function App() {
 
   return (
     <>
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          background: 'rgba(10, 10, 20, 0.95)',
+          color: '#fff',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)'
+        },
+        success: {
+          iconTheme: {
+            primary: '#4ade80',
+            secondary: '#0a0a14'
+          }
+        },
+        error: {
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#0a0a14'
+          }
+        }
+      }} />
       <Background backgroundUrl={backgroundUrl} />
     <div style={{ position: 'relative', height: '100vh' }}>
       {/* Background handled by useBackground hook */}

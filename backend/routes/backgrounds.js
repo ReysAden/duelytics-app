@@ -1,10 +1,26 @@
 const express = require('express')
 const multer = require('multer')
-const { supabaseAdmin } = require('../database')
-const { authenticate, requireSupporter } = require('../auth')
+const { supabaseAdmin } = require('../config/database')
+const { authenticate, requireSupporter } = require('../middleware/auth')
+const { backgroundUploadLimiter } = require('../middleware/rateLimiter')
 
 const router = express.Router()
-const upload = multer({ storage: multer.memoryStorage() })
+
+// Configure multer with file size limit (5MB)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+})
 
 // Get user's backgrounds (default + their uploads)
 router.get('/', authenticate, requireSupporter, async (req, res) => {
@@ -18,8 +34,24 @@ router.get('/', authenticate, requireSupporter, async (req, res) => {
   res.json(data)
 })
 
+// Multer error handler middleware
+const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        error: 'File too large',
+        message: 'Image must be smaller than 5MB'
+      })
+    }
+    return res.status(400).json({ error: err.message })
+  } else if (err) {
+    return res.status(400).json({ error: err.message })
+  }
+  next()
+}
+
 // Upload background
-router.post('/', authenticate, requireSupporter, upload.single('image'), async (req, res) => {
+router.post('/', authenticate, requireSupporter, backgroundUploadLimiter, upload.single('image'), handleUploadError, async (req, res) => {
   const { name } = req.body
   
   if (!name || !req.file) {
@@ -27,6 +59,21 @@ router.post('/', authenticate, requireSupporter, upload.single('image'), async (
   }
 
   try {
+    // Check how many backgrounds user already has (max 10)
+    const { data: existingBackgrounds, error: countError } = await supabaseAdmin
+      .from('backgrounds')
+      .select('id', { count: 'exact' })
+      .eq('uploaded_by', req.user.discord_id)
+    
+    if (countError) throw countError
+    
+    if (existingBackgrounds.length >= 10) {
+      return res.status(400).json({ 
+        error: 'Background limit reached',
+        message: 'You can only upload up to 10 custom backgrounds. Delete some to upload more.'
+      })
+    }
+
     // Upload to Supabase Storage
     const fileName = `${Date.now()}-${req.file.originalname}`
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage

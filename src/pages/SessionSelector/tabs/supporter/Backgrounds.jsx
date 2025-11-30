@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import './Backgrounds.css';
 
+// Cache for backgrounds list (5 min TTL)
+let backgroundsCache = null;
+let backgroundsCacheTime = 0;
+const BACKGROUNDS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache for user preference (session-persistent)
+let userPreferenceCache = null;
+
 function Backgrounds({ user }) {
+  const { t } = useTranslation(['common']);
   const [backgroundName, setBackgroundName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [backgrounds, setBackgrounds] = useState([]);
@@ -18,7 +28,16 @@ function Backgrounds({ user }) {
   }, [user]);
 
   const fetchBackgrounds = async () => {
+    // Check cache first (5 min TTL)
+    const now = Date.now();
+    if (backgroundsCache && (now - backgroundsCacheTime < BACKGROUNDS_CACHE_TTL)) {
+      console.log('📦 Backgrounds: Using cached list');
+      setBackgrounds(backgroundsCache);
+      return;
+    }
+
     try {
+      console.log('📥 Backgrounds: Fetching from API');
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('http://localhost:3001/api/backgrounds', {
         headers: {
@@ -27,6 +46,9 @@ function Backgrounds({ user }) {
       });
       if (response.ok) {
         const data = await response.json();
+        // Update cache
+        backgroundsCache = data;
+        backgroundsCacheTime = now;
         setBackgrounds(data);
       }
     } catch (error) {
@@ -35,7 +57,18 @@ function Backgrounds({ user }) {
   };
 
   const fetchUserPreference = async () => {
+    // Check cache first (session-persistent)
+    if (userPreferenceCache) {
+      console.log('📦 Backgrounds: Using cached preference');
+      if (userPreferenceCache.background_url) {
+        setSelectedBackground(userPreferenceCache.background_url);
+        applyBackground(userPreferenceCache.background_url);
+      }
+      return;
+    }
+
     try {
+      console.log('📥 Backgrounds: Fetching preference from API');
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('http://localhost:3001/api/backgrounds/preference', {
         headers: {
@@ -45,6 +78,8 @@ function Backgrounds({ user }) {
 
       if (response.ok) {
         const data = await response.json();
+        // Cache preference for this session
+        userPreferenceCache = data;
         if (data.background_url) {
           setSelectedBackground(data.background_url);
           applyBackground(data.background_url);
@@ -100,7 +135,7 @@ function Backgrounds({ user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!backgroundName || !backgroundImage) {
-      setErrorMessage('Please provide both name and image');
+      setErrorMessage(t('ui.provideBothNameAndImage'));
       return;
     }
 
@@ -127,13 +162,15 @@ function Backgrounds({ user }) {
         setBackgroundName('');
         setBackgroundImage(null);
         document.querySelector('input[type="file"]').value = '';
+        // Invalidate cache and refetch
+        backgroundsCache = null;
         fetchBackgrounds();
       } else {
         const errorData = await response.json();
-        setErrorMessage(errorData.error || 'Failed to upload background');
+        setErrorMessage(errorData.error || t('ui.failedUploadBackground'));
       }
     } catch (error) {
-      setErrorMessage('Error uploading background');
+      setErrorMessage(t('ui.errorUploadingBackground'));
     } finally {
       setUploading(false);
     }
@@ -154,6 +191,9 @@ function Backgrounds({ user }) {
         },
         body: JSON.stringify({ background_url: backgroundUrl })
       });
+      
+      // Update preference cache
+      userPreferenceCache = { background_url: backgroundUrl };
     } catch (error) {
       // Silent fail
     }
@@ -192,9 +232,13 @@ function Backgrounds({ user }) {
           const appRoot = document.getElementById('root');
           if (appRoot) appRoot.style.backgroundImage = '';
           localStorage.removeItem('user_background');
+          // Clear preference cache
+          userPreferenceCache = null;
         }
         setShowDeleteModal(false);
         setBackgroundToDelete(null);
+        // Invalidate cache and refetch
+        backgroundsCache = null;
         fetchBackgrounds();
       }
     } catch (error) {
@@ -220,7 +264,7 @@ function Backgrounds({ user }) {
             id="backgroundName"
             value={backgroundName}
             onChange={(e) => setBackgroundName(e.target.value)}
-            placeholder="Background name"
+            placeholder={t('ui.backgroundName')}
             style={{
               backgroundColor: '#374151',
               color: 'white',
@@ -254,7 +298,7 @@ function Backgrounds({ user }) {
         </div>
 
         <button type="submit" className="submit-btn" disabled={uploading || !backgroundName || !backgroundImage}>
-          {uploading ? 'Uploading...' : 'Upload Background'}
+          {uploading ? t('ui.uploading') : t('ui.uploadBackground')}
         </button>
       </form>
 
@@ -267,7 +311,7 @@ function Backgrounds({ user }) {
               <button
                 className="delete-background-btn"
                 onClick={() => handleDeleteBackground(bg.id, bg.image_url)}
-                title="Delete background"
+                title={t('ui.deleteBackground')}
               >
                 ×
               </button>
@@ -279,7 +323,7 @@ function Backgrounds({ user }) {
                 className={`set-background-btn ${selectedBackground === bg.image_url ? 'active' : ''}`}
                 onClick={() => handleSetBackground(bg.image_url)}
               >
-                {selectedBackground === bg.image_url ? '✓ Active' : 'Set as Background'}
+                {selectedBackground === bg.image_url ? `✓ ${t('ui.active')}` : t('ui.setAsBackground')}
               </button>
             </div>
           ))}
@@ -289,21 +333,21 @@ function Backgrounds({ user }) {
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDeleteBackground}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Background</h3>
-            <p>Are you sure you want to delete this background? This cannot be undone.</p>
+            <h3>{t('ui.deleteBackground')}</h3>
+            <p>{t('ui.confirmDeleteBackground')}</p>
             
             <div className="modal-actions">
               <button 
                 className="cancel-btn" 
                 onClick={cancelDeleteBackground}
               >
-                Cancel
+                {t('ui.cancel')}
               </button>
               <button 
                 className="delete-confirm-btn" 
                 onClick={confirmDeleteBackground}
               >
-                Delete
+                {t('ui.delete')}
               </button>
             </div>
           </div>

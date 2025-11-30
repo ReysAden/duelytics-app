@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useSessionContext } from '../../../../contexts/SessionContext';
 import './ArchiveSession.css';
 
 function ArchiveSession() {
+  const { t } = useTranslation(['common']);
   const { archivedSessions, loading: contextLoading } = useSessionContext();
   const [selectedSession, setSelectedSession] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -42,11 +44,11 @@ function ArchiveSession() {
 
   const handleViewSession = () => {
     if (!selectedSession) return;
-    navigate(`/session/${selectedSession}`);
+    navigate(`/archive/${selectedSession}`);
   };
 
   if (contextLoading) {
-    return <div className="archive-session">Loading archived sessions...</div>;
+    return <div className="archive-session">{t('ui.loadingArchivedSessions')}</div>;
   }
 
   const selectedSessionData = archivedSessions.find(s => s.id === parseInt(selectedSession));
@@ -66,8 +68,8 @@ function ArchiveSession() {
           >
             <span className="dropdown-label">
               {selectedSessionData 
-                ? `${selectedSessionData.name} (${selectedSessionData.game_mode})`
-                : 'Choose a session...'
+                ? selectedSessionData.name
+                : t('ui.chooseSession')
               }
             </span>
             <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -79,7 +81,7 @@ function ArchiveSession() {
             <div className="dropdown-panel" role="menu" aria-hidden={!showDropdown}>
               <ul className="dropdown-list">
                 {archivedSessions.length === 0 ? (
-                  <li className="dropdown-empty">No archived sessions available</li>
+                  <li className="dropdown-empty">{t('ui.noArchivedSessionsAvailable')}</li>
                 ) : (
                   archivedSessions.map((session) => (
                     <li key={session.id} role="menuitem">
@@ -88,7 +90,6 @@ function ArchiveSession() {
                         onClick={() => handleSessionSelect(session.id)}
                       >
                         <div className="session-name">{session.name}</div>
-                        <div className="session-mode">Mode: {session.game_mode}</div>
                       </button>
                     </li>
                   ))
@@ -103,13 +104,13 @@ function ArchiveSession() {
           onClick={handleViewSession}
           disabled={!selectedSession}
         >
-          View Session
+          {t('ui.viewSession')}
         </button>
       </div>
 
       {archivedSessions.length === 0 && !contextLoading && (
         <p className="empty-message">
-          No archived sessions found
+          {t('ui.noArchivedSessionsFound')}
         </p>
       )}
     </div>

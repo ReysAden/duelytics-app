@@ -1,46 +1,24 @@
 import './DeckAnalysis.css';
-import { useState, useEffect } from 'react';
-import { supabase } from '../../../../lib/supabase';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
+import { useCallback } from 'react';
 
 function DeckAnalysis({ sessionId, dateFilter, targetUserId = null }) {
-  const [decks, setDecks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { personalDeckAnalysis: decks, loading } = contextData;
 
-  useEffect(() => {
-    fetchDeckStats();
-  }, [sessionId, dateFilter, targetUserId]);
-
-  const fetchDeckStats = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      let url = `http://localhost:3001/api/sessions/${sessionId}/deck-analysis`;
-      const params = new URLSearchParams();
-      if (dateFilter !== 'all') params.append('days', dateFilter);
-      if (targetUserId) params.append('userId', targetUserId);
-      if (params.toString()) url += `?${params.toString()}`;
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
-      });
-      
-      const data = await response.json();
-      if (data.decks) {
-        setDecks(data.decks);
-      }
-    } catch (err) {
-      console.error('Failed to load deck stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getWinRateColor = (winRate) => {
+  // Memoize color calculation to avoid repeated lookups
+  const getWinRateColor = useCallback((winRate) => {
     if (winRate >= 60) return '#4ade80';
     if (winRate >= 40) return '#fbbf24';
     return '#f87171';
-  };
+  }, []);
 
   if (loading) return <div className="deck-analysis-loading">Loading...</div>;
   if (decks.length === 0) return <div className="no-data">No deck data yet</div>;
@@ -51,22 +29,24 @@ function DeckAnalysis({ sessionId, dateFilter, targetUserId = null }) {
         {decks.map((deck) => (
           <div 
             key={deck.id} 
-            className="deck-card"
+            className="deck-card-analysis"
             style={{ backgroundImage: `url(${deck.image_url})` }}
           >
-            <div className="deck-overlay">
+            <div className="deck-overlay-analysis">
+              <div className="deck-stats-top">
+                <div className="deck-winrate" style={{ color: getWinRateColor(deck.winRate) }}>
+                  {deck.winRate.toFixed(1)}%
+                </div>
+                <div className="deck-stats-row">
+                  <span className="deck-games">{deck.games} games</span>
+                </div>
+                <div className="deck-record">
+                  <span className="deck-wins">{deck.wins}W</span>
+                  <span> - </span>
+                  <span className="deck-losses">{deck.losses}L</span>
+                </div>
+              </div>
               <div className="deck-card-name">{deck.name}</div>
-              <div className="deck-winrate" style={{ color: getWinRateColor(deck.winRate) }}>
-                {deck.winRate.toFixed(1)}%
-              </div>
-              <div className="deck-stats-row">
-                <span className="deck-games">{deck.games} games</span>
-              </div>
-              <div className="deck-record">
-                <span className="deck-wins">{deck.wins}W</span>
-                <span> - </span>
-                <span className="deck-losses">{deck.losses}L</span>
-              </div>
             </div>
           </div>
         ))}

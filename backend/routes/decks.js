@@ -1,7 +1,7 @@
 const express = require('express')
 const multer = require('multer')
-const { supabaseAdmin } = require('../database')
-const { authenticate, requireAdmin } = require('../auth')
+const { supabaseAdmin } = require('../config/database')
+const { authenticate, requireAdmin } = require('../middleware/auth')
 
 const router = express.Router()
 const upload = multer({ 

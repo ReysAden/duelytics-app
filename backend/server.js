@@ -1,7 +1,7 @@
 require('dotenv').config({ path: '../.env' })
 const express = require('express')
 const cors = require('cors')
-const { connectDatabase } = require('./database')
+const { connectDatabase } = require('./config/database')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -17,7 +17,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 // Routes
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/admin', require('./routes/admin'))
-app.use('/api/sessions', require('./routes/sessions'))
+
+// Session routes (split into logical modules)
+app.use('/api/sessions', require('./routes/sessions.base'))
+app.use('/api/sessions', require('./routes/sessions.participation'))
+app.use('/api/sessions', require('./routes/sessions.leaderboard'))
+app.use('/api/sessions', require('./routes/sessions.stats'))
+app.use('/api/sessions', require('./routes/sessions.matchups'))
+
 app.use('/api/duels', require('./routes/duels'))
 app.use('/api/decks', require('./routes/decks'))
 app.use('/api/backgrounds', require('./routes/backgrounds'))

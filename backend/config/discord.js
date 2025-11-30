@@ -120,6 +120,7 @@ const requireSupporter = (req, res, next) =>
 
 module.exports = {
   syncUserFromDiscord,
+  getGuildMemberByBot,
   requireAuth,
   requireAdmin,
   requireSupporter

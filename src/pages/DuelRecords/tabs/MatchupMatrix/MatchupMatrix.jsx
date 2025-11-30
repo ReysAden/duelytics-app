@@ -1,71 +1,39 @@
 import './MatchupMatrix.css';
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase, db } from '../../../../lib/supabase';
+import { useState, useEffect, useMemo } from 'react';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 
 function MatchupMatrix() {
-  const { sessionId } = useParams();
-  const [matchups, setMatchups] = useState([]);
-  const [decks, setDecks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { matchups, decks, loading } = contextData;
   const [viewMode, setViewMode] = useState('matrix');
   const [legendFilter, setLegendFilter] = useState('top10');
-  const subscriptionRef = useRef(null);
 
-  useEffect(() => {
-    fetchMatchups();
-    subscriptionRef.current = db.subscribeToDuelChanges(sessionId, (payload) => {
-      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        fetchMatchups();
-      }
-    });
-    
-    return () => {
-      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
-    };
-  }, [sessionId]);
-
-  const fetchMatchups = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/session-matchups`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+  // Memoize matchup lookup map to avoid O(n²) searches on every render
+  const matchupMap = useMemo(() => {
+    const map = new Map();
+    matchups.forEach(m => {
+      // Store both direct and inverse matchups
+      map.set(`${m.deckAId}-${m.deckBId}`, m);
+      map.set(`${m.deckBId}-${m.deckAId}`, {
+        deckAId: m.deckBId,
+        deckBId: m.deckAId,
+        wins: m.losses,
+        losses: m.wins,
+        winRate: Math.round((m.losses / (m.wins + m.losses)) * 100)
       });
-      
-      const data = await response.json();
-      if (data.matchups && data.decks) {
-        setMatchups(data.matchups);
-        setDecks(data.decks);
-      }
-    } catch (err) {
-      console.error('Failed to load matchups:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return map;
+  }, [matchups]);
 
   const getMatchup = (deckAId, deckBId) => {
-    const direct = matchups.find(
-      m => m.deckAId === deckAId && m.deckBId === deckBId
-    );
-    if (direct) return direct;
-
-    const inverse = matchups.find(
-      m => m.deckAId === deckBId && m.deckBId === deckAId
-    );
-    if (inverse) {
-      return {
-        deckAId,
-        deckBId,
-        wins: inverse.losses,
-        losses: inverse.wins,
-        winRate: Math.round((inverse.losses / (inverse.wins + inverse.losses)) * 100)
-      };
-    }
-
-    return null;
+    return matchupMap.get(`${deckAId}-${deckBId}`) || null;
   };
 
   const getColor = (winRate) => {
@@ -195,7 +163,7 @@ function MatchupMatrix() {
                     y="0"
                     width="1"
                     height="1"
-                    preserveAspectRatio="xMidYMid slice"
+                    preserveAspectRatio="xMidYMin slice"
                   />
                 </pattern>
               ))}

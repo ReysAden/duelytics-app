@@ -1,0 +1,164 @@
+.discord-verification-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.discord-verification-modal {
+  background-color: rgba(10, 10, 20, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.discord-verification-modal h3 {
+  margin: 0 0 8px 0;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.discord-verification-modal > p {
+  margin: 0 0 24px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.verification-info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.info-value {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.verification-steps {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.verification-steps strong {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.verification-steps ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.verification-steps li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discord-join-btn,
+.retry-btn,
+.logout-btn {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.discord-join-btn {
+  background: #10b981;
+  color: white;
+}
+
+.discord-join-btn:hover {
+  background: #059669;
+}
+
+.retry-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.retry-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.retry-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.discord-verification-modal > p:last-of-type {
+  margin: 0;
+}

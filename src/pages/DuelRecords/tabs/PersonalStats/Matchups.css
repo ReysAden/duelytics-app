@@ -1,3 +1,6 @@
+/* ============================
+   MATCHUP HEADER + NAVIGATION
+   ============================ */
 .matchup-header {
   padding: 16px 20px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -13,8 +16,9 @@
 
 .matchup-btn {
   padding: 5px 10px;
-  background: transparent;
-  border: none;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.6);
   font-size: 13px;
   font-weight: 500;
@@ -35,13 +39,35 @@
   border: 1px solid rgb(99, 102, 241);
 }
 
-/* Matrix view */
-.matchups-container {
-  max-width: 100%;
-  max-height: 400px;
+/* ============================
+   MATRIX VIEW
+   ============================ */
+.matrix-wrapper {
+  flex: 1;
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.matrix-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.matrix-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
+}
+
+.matrix-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.matrix-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .matchups-loading,
@@ -52,20 +78,34 @@
   text-align: center;
 }
 
-/* Most faced view */
+/* ============================
+   MOST FACED VIEW (CONTAINER)
+   ============================ */
 .most-faced-layout {
   display: flex;
   gap: 20px;
-  height: 350px;
+  flex: 1;
   align-items: center;
+  overflow: hidden;
+  padding: 10px;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
 }
 
+/* ============================
+   SVG PIE CHART
+   ============================ */
 .pie-chart {
   width: 280px;
   height: 280px;
   flex-shrink: 0;
 }
 
+/* ============================
+   LEGEND FOR MOST FACED
+   ============================ */
 .legend-container {
   flex: 1;
   display: flex;
@@ -144,7 +184,6 @@
   background: rgba(0, 0, 0, 0.6);
 }
 
-
 .deck-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -158,7 +197,10 @@
   font-weight: 400;
 }
 
-.matchups-table {
+/* ============================
+   MATRIX TABLE CELLS
+   ============================ */
+.matrix-table {
   border-collapse: collapse;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -168,12 +210,12 @@
 
 .corner-cell {
   background: rgba(0, 0, 0, 0.9);
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
-  height: 80px;
-  min-height: 80px;
-  max-height: 80px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   position: sticky;
   left: 0;
   top: 0;
@@ -182,13 +224,13 @@
 }
 
 .header-cell {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
-  height: 80px;
-  min-height: 80px;
-  max-height: 80px;
-  padding: 4px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
+  padding: 3px;
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -214,12 +256,12 @@
 }
 
 .matchup-cell {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
-  height: 80px;
-  min-height: 80px;
-  max-height: 80px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   text-align: center;
   vertical-align: middle;
   background: rgba(0, 0, 0, 0.6);
@@ -234,18 +276,18 @@
 }
 
 .winrate {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .record {
-  font-size: 11px;
+  font-size: 9px;
   color: rgba(255, 255, 255, 0.6);
 }
 
 .no-matchup {
-  font-size: 18px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.3);
 }

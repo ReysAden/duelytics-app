@@ -7,6 +7,7 @@ export function SessionProvider({ children }) {
   const [sessions, setSessions] = useState([]);
   const [archivedSessions, setArchivedSessions] = useState([]);
   const [tiers, setTiers] = useState([]);
+  const [participantCounts, setParticipantCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const subscriptionRef = useRef(null);
 
@@ -23,13 +24,46 @@ export function SessionProvider({ children }) {
         const archivedData = await archivedRes.json();
         const tiersData = await tiersRes.json();
 
-        if (activeData.sessions) setSessions(activeData.sessions);
+        if (activeData.sessions) {
+          setSessions(activeData.sessions);
+          // Fetch participant counts in parallel
+          fetchParticipantCounts(activeData.sessions);
+        }
         if (archivedData.sessions) setArchivedSessions(archivedData.sessions);
         if (tiersData.tiers) setTiers(tiersData.tiers);
       } catch (err) {
         // Silent fail
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchParticipantCounts = async (activeSessions) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        // Fetch all participant counts in parallel
+        const countPromises = activeSessions.map(async (s) => {
+          try {
+            const response = await fetch(`http://localhost:3001/api/sessions/${s.id}/participants`, {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const data = await response.json();
+            return { id: s.id, count: data.participants?.length || 0 };
+          } catch {
+            return { id: s.id, count: 0 };
+          }
+        });
+
+        const results = await Promise.all(countPromises);
+        const counts = {};
+        results.forEach(({ id, count }) => {
+          counts[id] = count;
+        });
+        setParticipantCounts(counts);
+      } catch (err) {
+        console.error('Failed to fetch participant counts:', err);
       }
     };
 
@@ -67,7 +101,7 @@ export function SessionProvider({ children }) {
   }, []);
 
   return (
-    <SessionContext.Provider value={{ sessions, archivedSessions, tiers, loading }}>
+    <SessionContext.Provider value={{ sessions, archivedSessions, tiers, participantCounts, loading }}>
       {children}
     </SessionContext.Provider>
   );

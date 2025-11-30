@@ -26,7 +26,8 @@
     "select": "Select",
     "submit": "Submit",
     "join": "Join",
-    "browse": "Browse"
+    "browse": "Browse",
+    "notAuthenticated": "Not authenticated"
   },
   "sidebar": {
     "selectSession": "Select a session",
@@ -82,6 +83,37 @@
     "delete": "Delete",
     "setAsBackground": "Set as Background",
     "deleteBackground": "Delete Background",
-    "confirmDelete": "Are you sure you want to delete this background?"
+    "confirmDelete": "Are you sure you want to delete this background?",
+    "provideBothNameAndImage": "Please provide both name and image",
+    "failedUploadBackground": "Failed to upload background",
+    "errorUploadingBackground": "Error uploading background",
+    "uploadBackground": "Upload Background",
+    "active": "Active",
+    "confirmDeleteBackground": "Are you sure you want to delete this background? This cannot be undone.",
+    "failedLoadDecks": "Failed to load decks",
+    "failedDeleteDeck": "Failed to delete deck",
+    "deckName": "Deck name",
+    "creating": "Creating...",
+    "createDeck": "Create Deck",
+    "noDecksYet": "No decks yet",
+    "deleteDeck": "Delete Deck",
+    "confirmDeleteDeck": "Are you sure you want to delete this deck? This cannot be undone.",
+    "failedCreateDeck": "Failed to create deck",
+    "sessionName": "Session Name",
+    "selectGameMode": "Select game mode",
+    "createSession": "Create Session",
+    "failedCreateSession": "Failed to create session",
+    "fillOutAllFields": "Please fill out all fields",
+    "created": "Created!",
+    "failedLoadSessions": "Failed to load sessions",
+    "archived": "Archived!",
+    "failedArchiveSession": "Failed to archive session",
+    "deleted": "Deleted!",
+    "failedDeleteSession": "Failed to delete session",
+    "loadingSessions": "Loading sessions...",
+    "noSessionsAvailable": "No sessions available",
+    "archive": "Archive",
+    "deleteSession": "Delete Session",
+    "confirmDeleteSession": "Are you sure you want to delete this session? This cannot be undone."
   }
 }

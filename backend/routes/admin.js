@@ -1,6 +1,6 @@
 const express = require('express')
-const { supabaseAdmin } = require('../database')
-const { authenticate, requireAdmin, requireSessionAdmin } = require('../auth')
+const { supabaseAdmin } = require('../config/database')
+const { authenticate, requireAdmin, requireSessionAdmin } = require('../middleware/auth')
 
 const router = express.Router()
 

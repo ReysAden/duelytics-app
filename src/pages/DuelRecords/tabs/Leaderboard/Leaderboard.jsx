@@ -1,74 +1,69 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase, db } from '../../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 import './Leaderboard.css';
 
 function Leaderboard() {
   const { t } = useTranslation(['common', 'duelRecords']);
-  const { sessionId } = useParams();
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [sessionData, setSessionData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const subscriptionRef = useRef(null);
+  
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { leaderboard, sessionData, loading } = contextData;
+  
+  const [hideStats, setHideStats] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
+  // Fetch user preference once
   useEffect(() => {
-    if (sessionId) {
-      fetchSession();
-      fetchLeaderboard();
-      setupRealtimeLeaderboard();
-    }
+    fetchCurrentUserPreference();
+  }, []);
 
-    return () => {
-      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
-    };
-  }, [sessionId]);
-
-  const fetchSession = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`);
-      const data = await response.json();
-      if (data.session) {
-        setSessionData(data.session);
-      }
-    } catch (err) {
-      console.error('Failed to load session:', err);
-    }
-  };
-
-  const fetchLeaderboard = async () => {
+  const fetchCurrentUserPreference = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/leaderboard`, {
+      const res = await fetch(`http://localhost:3001/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
-      
-      const data = await response.json();
-      if (data.leaderboard) {
-        setLeaderboard(data.leaderboard);
-      }
-    } catch (err) {
-      console.error('Failed to load leaderboard:', err);
-    } finally {
-      setLoading(false);
+      const me = await res.json();
+      if (me && typeof me.hide_from_leaderboard === 'boolean') setHideStats(me.hide_from_leaderboard);
+    } catch (e) {
+      console.error('Failed to fetch user preference', e);
     }
   };
 
-  const setupRealtimeLeaderboard = () => {
-    subscriptionRef.current = db.subscribeToLeaderboard(sessionId, (payload) => {
-      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        setLeaderboard((prev) => {
-          const updated = prev.map((p) => (p.user_id === payload.new.user_id ? payload.new : p));
-          if (!updated.find((p) => p.user_id === payload.new.user_id)) updated.push(payload.new);
-          return updated.sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
-        });
-      }
-    });
+  const toggleHideStats = async () => {
+    try {
+      setToggling(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`http://localhost:3001/api/sessions/user/preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ hide_from_leaderboard: !hideStats })
+      });
+      const data = await res.json();
+      if (data?.user) setHideStats(!!data.user.hide_from_leaderboard);
+      // Leaderboard will auto-update via realtime subscription
+    } catch (e) {
+      console.error('Failed to toggle preference', e);
+    } finally {
+      setToggling(false);
+    }
   };
 
-  const getTierColor = (tierName) => {
+  // Memoize tier color calculation to avoid repeated lookups
+  const getTierColor = useCallback((tierName) => {
     if (!tierName) return '#ffffff';
     const tier = tierName.toLowerCase();
     if (tier.includes('rookie')) return '#4ade80';
@@ -79,7 +74,7 @@ function Leaderboard() {
     if (tier.includes('diamond')) return '#b19cd9';
     if (tier.includes('master')) return '#ff8c00';
     return '#ffffff';
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -98,9 +93,17 @@ function Leaderboard() {
   }
 
   const isLadder = sessionData?.game_mode === 'ladder';
+  const isArchived = sessionData?.status === 'archived';
 
   return (
     <div className="leaderboard-container">
+      <div className="leaderboard-header">
+        {!isArchived && (
+          <button className="hide-stats-toggle" onClick={toggleHideStats} disabled={toggling}>
+            {hideStats ? t('duelRecords:leaderboard.showMyStats') : t('duelRecords:leaderboard.hideMyStats')}
+          </button>
+        )}
+      </div>
       <div className="leaderboard-wrapper">
         <table className="leaderboard-table">
           <thead>
@@ -131,20 +134,17 @@ function Leaderboard() {
                       : Math.round(player.points)
                   )}
                 </td>
-                <td className="games-cell">{player.total_games}</td>
+                <td className="games-cell">{!isArchived && player.hide_stats ? '-' : player.total_games}</td>
                 <td className="deck-cell">
-                  {player.top_deck ? (
-                    <div className="deck-info">
-                      <img src={player.top_deck_image} alt={player.top_deck} className="deck-thumb" />
-                      <span className="deck-name">{player.top_deck}</span>
-                    </div>
+                  {!isArchived && player.hide_stats ? (
+                    <span className="deck-name">{t('duelRecords:leaderboard.hidden')}</span>
                   ) : (
-                    '-'
+                    player.top_deck ? <span className="deck-name">{player.top_deck}</span> : '-'
                   )}
                 </td>
-                <td className="winrate-cell">{player.overall_winrate.toFixed(1)}%</td>
-                <td className="winrate-cell">{player.first_winrate.toFixed(1)}%</td>
-                <td className="winrate-cell">{player.second_winrate.toFixed(1)}%</td>
+                <td className="winrate-cell">{!isArchived && player.hide_stats ? '-' : `${player.overall_winrate.toFixed(1)}%`}</td>
+                <td className="winrate-cell">{!isArchived && player.hide_stats ? '-' : `${player.first_winrate.toFixed(1)}%`}</td>
+                <td className="winrate-cell">{!isArchived && player.hide_stats ? '-' : `${player.second_winrate.toFixed(1)}%`}</td>
               </tr>
             ))}
           </tbody>

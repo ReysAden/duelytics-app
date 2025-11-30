@@ -1,7 +1,7 @@
 const express = require('express')
-const { supabase, supabaseAdmin } = require('../database')
-const { syncUserFromDiscord } = require('../discord')
-const { authenticate } = require('../auth')
+const { supabase, supabaseAdmin } = require('../config/database')
+const { syncUserFromDiscord } = require('../config/discord')
+const { authenticate } = require('../middleware/auth')
 
 const router = express.Router()
 
@@ -27,6 +27,12 @@ router.get('/callback', async (req, res) => {
     // Sync user data with our database
     await syncUserFromDiscord(user)
 
+    // Check if user is in Discord guild
+    const { getGuildMemberByBot } = require('../config/discord')
+    const discordId = user.user_metadata?.provider_id
+    const guildMember = await getGuildMemberByBot(discordId)
+    const isGuildMember = !!guildMember
+
     // Return tokens for client storage
     res.json({
       access_token,
@@ -36,7 +42,8 @@ router.get('/callback', async (req, res) => {
         username: user.user_metadata?.full_name,
         avatar: user.user_metadata?.avatar_url,
         email: user.email
-      }
+      },
+      isGuildMember
     })
   } catch (error) {
     console.error('OAuth callback error:', error)
@@ -45,8 +52,42 @@ router.get('/callback', async (req, res) => {
 })
 
 // Get current user
-router.get('/me', authenticate, (req, res) => {
-  res.json({ user: req.user })
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('discord_id, username, hide_from_leaderboard')
+      .eq('discord_id', req.user.discord_id)
+      .single()
+    
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+    
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Check if user is in Discord guild
+router.get('/check-guild', authenticate, async (req, res) => {
+  try {
+    const { getGuildMemberByBot } = require('../config/discord')
+    const discordId = req.user.discord_id
+    const guildMember = await getGuildMemberByBot(discordId)
+    const isGuildMember = !!guildMember
+    
+    res.json({
+      isGuildMember,
+      user: {
+        discord_id: req.user.discord_id,
+        username: req.user.username
+      }
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // Sync user roles from Discord

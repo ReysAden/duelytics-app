@@ -3,3 +3,5 @@ node_modules
 WARP.md
 dist
 dist-electron
+database
+release

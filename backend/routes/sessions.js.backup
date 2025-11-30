@@ -154,50 +154,48 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
       .select(`
         user_id,
         current_points,
-        total_games,
-        users!player_session_stats_user_id_fkey (username),
+        users!player_session_stats_user_id_fkey (username, hide_from_leaderboard),
         ladder_tiers (tier_name)
       `)
       .eq('session_id', sessionId)
       .order('current_points', { ascending: false })
 
+    const currentUserId = req.user.discord_id
+
     if (!players || players.length === 0) {
       return res.json({ leaderboard: [] })
     }
 
-    // Get duels for each player to calculate stats
-    const leaderboardData = await Promise.all(players.map(async (player) => {
-      const { data: duels } = await supabaseAdmin
-        .from('duels')
-        .select(`
-          result,
-          went_first,
-          player_deck_id,
-          player_deck:decks!duels_player_deck_id_fkey(name, image_url)
-        `)
-        .eq('session_id', sessionId)
-        .eq('user_id', player.user_id)
+    // Get ALL duels for this session in one query (not per-player)
+    const { data: allDuels } = await supabaseAdmin
+      .from('duels')
+      .select(`
+        user_id,
+        result,
+        went_first,
+        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url)
+      `)
+      .eq('session_id', sessionId)
 
-      if (!duels || duels.length === 0) {
-        return {
-          user_id: player.user_id,
-          username: player.users.username,
-          points: player.current_points,
-          tier_name: player.ladder_tiers?.tier_name || null,
-          total_games: 0,
-          top_deck: null,
-          top_deck_image: null,
-          overall_winrate: 0,
-          first_winrate: 0,
-          second_winrate: 0
+    // Group duels by user
+    const duelsByUser = {}
+    if (allDuels && allDuels.length > 0) {
+      allDuels.forEach(duel => {
+        if (!duelsByUser[duel.user_id]) {
+          duelsByUser[duel.user_id] = []
         }
-      }
+        duelsByUser[duel.user_id].push(duel)
+      })
+    }
 
-      // Overall win rate
+    // Build leaderboard
+    const leaderboardData = players.map((player) => {
+      const duels = duelsByUser[player.user_id] || []
+      const totalGames = duels.length
       const wins = duels.filter(d => d.result === 'win').length
-      const overall_winrate = (wins / duels.length) * 100
+      const overall_winrate = totalGames > 0 ? (wins / totalGames) * 100 : 0
 
-      // Turn order win rates
+      // Turn order stats
       const firstDuels = duels.filter(d => d.went_first)
       const secondDuels = duels.filter(d => !d.went_first)
       const firstWins = firstDuels.filter(d => d.result === 'win').length
@@ -206,34 +204,36 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
       const second_winrate = secondDuels.length > 0 ? (secondWins / secondDuels.length) * 100 : 0
 
       // Most played deck
-      const deckCounts = {}
-      duels.forEach(duel => {
-        const deckId = duel.player_deck_id
-        if (!deckCounts[deckId]) {
-          deckCounts[deckId] = {
-            count: 0,
-            name: duel.player_deck.name,
-            image: duel.player_deck.image_url
+      let topDeck = null
+      let topDeckImage = null
+      if (duels.length > 0) {
+        const deckCounts = {}
+        duels.forEach(duel => {
+          const deckId = duel.player_deck.id
+          if (!deckCounts[deckId]) {
+            deckCounts[deckId] = { count: 0, name: duel.player_deck.name, image: duel.player_deck.image_url }
           }
-        }
-        deckCounts[deckId].count++
-      })
-
-      const mostPlayed = Object.values(deckCounts).sort((a, b) => b.count - a.count)[0]
+          deckCounts[deckId].count++
+        })
+        const mostPlayed = Object.values(deckCounts).sort((a, b) => b.count - a.count)[0]
+        topDeck = mostPlayed?.name || null
+        topDeckImage = mostPlayed?.image || null
+      }
 
       return {
         user_id: player.user_id,
         username: player.users.username,
         points: player.current_points,
         tier_name: player.ladder_tiers?.tier_name || null,
-        total_games: duels.length,
-        top_deck: mostPlayed?.name || null,
-        top_deck_image: mostPlayed?.image || null,
+        total_games: totalGames,
+        top_deck: topDeck,
+        top_deck_image: topDeckImage,
         overall_winrate,
         first_winrate,
-        second_winrate
+        second_winrate,
+        hide_stats: player.users.hide_from_leaderboard && player.user_id !== currentUserId
       }
-    }))
+    })
 
     // Sort by points (or tier for ladder mode)
     const sortedLeaderboard = session?.game_mode === 'ladder'
@@ -960,6 +960,40 @@ router.get('/:sessionId/participants', authenticate, async (req, res) => {
     .sort((a, b) => a.username.localeCompare(b.username))
 
     res.json({ participants })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Update user preferences (e.g., hide stats from leaderboard)
+router.patch('/user/preferences', authenticate, async (req, res) => {
+  try {
+    const { hide_from_leaderboard } = req.body
+    const userId = req.user.discord_id
+
+    if (typeof hide_from_leaderboard !== 'boolean') {
+      return res.status(400).json({ error: 'hide_from_leaderboard must be a boolean' })
+    }
+
+    // Update user preferences
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .update({ hide_from_leaderboard })
+      .eq('discord_id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({
+      success: true,
+      message: 'Preferences updated successfully',
+      user: {
+        hide_from_leaderboard: data.hide_from_leaderboard
+      }
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

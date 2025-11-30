@@ -216,10 +216,23 @@ const closeDatabase = async () => {
   console.log('📦 Supabase connections managed automatically - no manual cleanup needed')
 }
 
+// Create authenticated client from request token
+const getAuthenticatedClient = (authToken) => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    }
+  });
+};
+
 module.exports = {
   connectDatabase,
   closeDatabase,
   db,
   supabase,        // Regular client (follows RLS)
-  supabaseAdmin    // Admin client (bypasses RLS)
+  supabaseAdmin,   // Admin client (bypasses RLS)
+  getAuthenticatedClient,
+  createClient     // Export for creating authenticated clients
 }

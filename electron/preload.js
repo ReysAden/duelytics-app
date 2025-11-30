@@ -15,18 +15,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   saveFile: (data) => ipcRenderer.invoke('dialog:saveFile', data),
   
-  // Overlay
+  // Overlay window
   overlay: {
-    open: (sessionId) => ipcRenderer.invoke('overlay:open', sessionId),
-    resize: (size) => ipcRenderer.invoke('overlay:resize', size),
+    open: (params) => ipcRenderer.invoke('overlay:open', params),
     close: () => ipcRenderer.invoke('overlay:close'),
+    resize: (size) => ipcRenderer.invoke('overlay:resize', size),
+  },
+  
+  // IPC communication
+  ipcRenderer: {
+    send: (channel, data) => ipcRenderer.send(channel, data),
   },
   
   // Duel submission notification
   notifyDuelSubmitted: (sessionId) => ipcRenderer.invoke('duel:submitted', sessionId),
   
+  // Language change notification
+  notifyLanguageChange: (language) => ipcRenderer.invoke('language:change', language),
+  
   // Listen to events from main process
-  onUpdateAvailable: (callback) => ipcRenderer.on('update:available', callback),
-  onUpdateDownloaded: (callback) => ipcRenderer.on('update:downloaded', callback),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', callback),
+  onUpdateReady: (callback) => ipcRenderer.on('update-ready', callback),
+  installUpdate: () => ipcRenderer.invoke('app:install-update'),
   onDuelSubmitted: (callback) => ipcRenderer.on('duel:submitted', (event, sessionId) => callback(sessionId)),
+  onLanguageChange: (callback) => ipcRenderer.on('language:changed', (event, language) => callback(language)),
 })

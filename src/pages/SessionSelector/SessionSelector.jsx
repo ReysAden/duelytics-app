@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sidebar } from '../../components/Sidebar';
 import { TabHeader } from '../../components/TabHeader';
 import { SessionProvider } from '../../contexts/SessionContext';
@@ -10,6 +11,7 @@ import CreateNewSession from './tabs/admin/CreateNewSession';
 import ManageSessions from './tabs/admin/ManageSessions';
 
 function SessionSelector({ user, userRoles }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('active-session');
 
   const hasRole = (role) => {

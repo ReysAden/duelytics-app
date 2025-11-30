@@ -12,16 +12,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Discord OAuth configuration
-export const discordConfig = {
-  clientId: import.meta.env.DISCORD_CLIENT_ID,
-  clientSecret: import.meta.env.DISCORD_CLIENT_SECRET,
-  redirectUri: import.meta.env.DISCORD_REDIRECT_URI,
-  guildId: import.meta.env.DISCORD_GUILD_ID,
-  adminRoleId: import.meta.env.DISCORD_ADMIN_ROLE_ID,
-  supporterRoleId: import.meta.env.DISCORD_SUPPORTER_ROLE_ID
-}
-
 // Helper functions for database operations
 export const db = {
   // Get user by discord ID
@@ -86,24 +76,37 @@ export const db = {
   },
 
   subscribeToDuels(sessionId, onDuelAdded, onDuelUpdated, onDuelDeleted) {
-    return supabase
+    const channel = supabase
       .channel(`duels:${sessionId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
-        (payload) => onDuelAdded?.(payload.new)
+        (payload) => {
+          console.log('📡 Supabase event: INSERT duels', payload);
+          onDuelAdded?.(payload.new);
+        }
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
-        (payload) => onDuelUpdated?.(payload.new)
+        (payload) => {
+          console.log('📡 Supabase event: UPDATE duels', payload);
+          onDuelUpdated?.(payload.new);
+        }
       )
       .on(
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
-        (payload) => onDuelDeleted?.(payload.old)
+        (payload) => {
+          console.log('📡 Supabase event: DELETE duels', payload);
+          onDuelDeleted?.(payload.old);
+        }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`✅ Duels subscription status for session ${sessionId}:`, status);
+      });
+    
+    return channel;
   },
 
   subscribeToPlayerStats(sessionId, onStatsUpdated) {

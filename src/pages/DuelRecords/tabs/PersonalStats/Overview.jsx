@@ -1,9 +1,19 @@
 import './Overview.css';
-import { useState, useEffect } from 'react';
-import { supabase } from '../../../../lib/supabase';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 
 function Overview({ sessionId, dateFilter, targetUserId = null }) {
-  const [stats, setStats] = useState({
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { personalOverview, loading } = contextData;
+  
+  // Default stats if no data yet
+  const stats = personalOverview || {
     totalGames: 0,
     winRate: 0,
     firstWinRate: 0,
@@ -13,38 +23,10 @@ function Overview({ sessionId, dateFilter, targetUserId = null }) {
     bestDeck: { name: '-', winRate: 0, games: 0 },
     worstDeck: { name: '-', winRate: 0, games: 0 },
     mostFaced: []
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchOverviewStats();
-  }, [sessionId, dateFilter, targetUserId]);
-
-  const fetchOverviewStats = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      let url = `http://localhost:3001/api/sessions/${sessionId}/overview`;
-      const params = new URLSearchParams();
-      if (dateFilter !== 'all') params.append('days', dateFilter);
-      if (targetUserId) params.append('userId', targetUserId);
-      if (params.toString()) url += `?${params.toString()}`;
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
-      });
-      
-      const data = await response.json();
-      if (data.overview) {
-        setStats(data.overview);
-      }
-    } catch (err) {
-      console.error('Failed to load overview:', err);
-    } finally {
-      setLoading(false);
-    }
   };
+
+  // Data is now pre-fetched and cached in SessionDataContext
+  // No need for component-level fetching!
 
   if (loading) return <div className="overview-loading">Loading...</div>;
 

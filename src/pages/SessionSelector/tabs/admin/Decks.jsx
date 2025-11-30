@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import DeckCard from '../../../../components/DeckCard';
 import './Decks.css';
 
 function Decks() {
+  const { t } = useTranslation(['common']);
   const [decks, setDecks] = useState([]);
   const [deckName, setDeckName] = useState('');
   const [deckImage, setDeckImage] = useState(null);
@@ -26,7 +28,7 @@ function Decks() {
         setDecks(data.decks);
       }
     } catch (err) {
-      setError('Failed to load decks');
+      setError(t('ui.failedLoadDecks'));
     }
   };
 
@@ -51,14 +53,14 @@ function Decks() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete deck');
+        throw new Error(data.error || t('ui.failedDeleteDeck'));
       }
 
       setShowDeleteModal(false);
       setDeckToDelete(null);
       fetchDecks();
     } catch (err) {
-      setError(err.message || 'Failed to delete deck');
+      setError(err.message || t('ui.failedDeleteDeck'));
     }
   };
 
@@ -83,7 +85,7 @@ function Decks() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('Not authenticated');
+        setError(t('common.notAuthenticated'));
         return;
       }
 
@@ -107,7 +109,7 @@ function Decks() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create deck');
+        throw new Error(data.error || t('ui.failedCreateDeck'));
       }
 
       setDeckName('');
@@ -134,7 +136,7 @@ function Decks() {
             id="deckName"
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
-            placeholder="Deck name"
+            placeholder={t('ui.deckName')}
             required
             style={{
               backgroundColor: '#374151',
@@ -170,7 +172,7 @@ function Decks() {
         </div>
 
         <button type="submit" className="submit-btn" disabled={loading || !deckName || !deckImage}>
-          {loading ? 'Creating...' : 'Create Deck'}
+          {loading ? t('ui.creating') : t('ui.createDeck')}
         </button>
       </form>
 
@@ -178,7 +180,7 @@ function Decks() {
 
       <div className="current-decks">
         {decks.length === 0 ? (
-          <p style={{ color: 'rgba(255, 255, 255, 0.5)' }}>No decks yet</p>
+          <p style={{ color: 'rgba(255, 255, 255, 0.5)' }}>{t('ui.noDecksYet')}</p>
         ) : (
           <div className="deck-list">
             {decks.map((deck) => (
@@ -195,21 +197,21 @@ function Decks() {
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDeleteDeck}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Deck</h3>
-            <p>Are you sure you want to delete this deck? This cannot be undone.</p>
+            <h3>{t('ui.deleteDeck')}</h3>
+            <p>{t('ui.confirmDeleteDeck')}</p>
             
             <div className="modal-actions">
               <button 
                 className="cancel-btn" 
                 onClick={cancelDeleteDeck}
               >
-                Cancel
+                {t('ui.cancel')}
               </button>
               <button 
                 className="delete-confirm-btn" 
                 onClick={confirmDeleteDeck}
               >
-                Delete
+                {t('ui.delete')}
               </button>
             </div>
           </div>

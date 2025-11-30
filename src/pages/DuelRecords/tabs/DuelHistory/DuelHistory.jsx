@@ -1,51 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase, db } from '../../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 import './DuelHistory.css';
 
 export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = false }) {
   const { t } = useTranslation('duelRecords');
-  const [duels, setDuels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const subscriptionRef = useRef(null);
+  
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { duels, loading, error } = contextData;
 
-  useEffect(() => {
-    if (sessionId) {
-      fetchDuels();
-      if (!isArchived) setupRealtimeDuels();
-    }
-
-    return () => {
-      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current);
-    };
-  }, [sessionId, isArchived]);
-
-  const fetchDuels = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/duels`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch duels');
-      const data = await response.json();
-      setDuels(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (duelId) => {
-    if (!window.confirm('Are you sure you want to delete this duel?')) return;
-
+  const handleDelete = useCallback(async (duelId) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
@@ -56,30 +28,16 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
       });
 
       if (!response.ok) throw new Error('Failed to delete duel');
-      setDuels(prev => prev.filter(d => d.id !== duelId));
-      
-      // Refresh parent component stats
       if (onDuelDeleted) onDuelDeleted();
     } catch (err) {
-      setError(err.message);
+      console.error('Failed to delete duel:', err.message);
     }
-  };
+  }, [onDuelDeleted]);
 
-  const setupRealtimeDuels = () => {
-    subscriptionRef.current = db.subscribeToDuels(
-      sessionId,
-      (newDuel) => setDuels((prev) => [newDuel, ...prev]),
-      (updatedDuel) => setDuels((prev) => prev.map((d) => (d.id === updatedDuel.id ? updatedDuel : d))),
-      (deletedDuel) => {
-        setDuels((prev) => prev.filter((d) => d.id !== deletedDuel.id));
-        onDuelDeleted?.();
-      }
-    );
-  };
-
-  const formatDate = (dateString) => {
+  // Memoize date formatting function
+  const formatDate = useCallback((dateString) => {
     return new Date(dateString).toISOString().split('T')[0];
-  };
+  }, []);
 
   if (loading) {
     return (

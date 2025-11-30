@@ -12,8 +12,8 @@
     "yourDeck": "你的卡组",
     "opponentDeck": "对手的卡组",
     "coinFlip": "硬币胜负",
-    "won": "胜",
-    "lost": "负",
+    "won": "正面(胜)",
+    "lost": "反面(负)",
     "turnOrder": "先后攻",
     "first": "先攻",
     "second": "后攻",
@@ -60,6 +60,9 @@
     "topDeck": "顶级卡组",
     "overall": "总体数据",
     "first": "先攻",
-    "second": "后攻"
+    "second": "后攻",
+    "hideMyStats": "隐藏我的统计数据",
+    "showMyStats": "显示我的统计数据",
+    "hidden": "已隐藏"
   }
 }

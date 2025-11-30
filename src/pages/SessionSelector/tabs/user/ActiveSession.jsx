@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import { useSessionContext } from '../../../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import './ActiveSession.css';
 
 function ActiveSession() {
-  const { sessions, tiers, loading: contextLoading } = useSessionContext();
+  const { t } = useTranslation(['common']);
+  const { sessions, tiers, participantCounts, loading: contextLoading } = useSessionContext();
   const [selectedSession, setSelectedSession] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -127,7 +129,7 @@ function ActiveSession() {
   };
 
   if (contextLoading) {
-    return <div className="active-session">Loading sessions...</div>;
+    return <div className="active-session">{t('common.loading')}</div>;
   }
 
   const selectedSessionData = sessions.find(s => s.id === parseInt(selectedSession));
@@ -149,7 +151,7 @@ function ActiveSession() {
             <span className="dropdown-label">
               {selectedSessionData 
                 ? `${selectedSessionData.name} (${selectedSessionData.game_mode})`
-                : 'Choose a session...'
+                : t('ui.chooseSession')
               }
             </span>
             <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -161,7 +163,7 @@ function ActiveSession() {
             <div className="dropdown-panel" role="menu" aria-hidden={!showDropdown}>
               <ul className="dropdown-list">
                 {sessions.length === 0 ? (
-                  <li className="dropdown-empty">No active sessions available</li>
+                  <li className="dropdown-empty">{t('ui.noActiveSessionsAvailable')}</li>
                 ) : (
                   sessions.map((session) => (
                     <li key={session.id} role="menuitem">
@@ -170,7 +172,10 @@ function ActiveSession() {
                         onClick={() => handleSessionSelect(session.id)}
                       >
                         <div className="session-name">{session.name}</div>
-                        <div className="session-mode">Mode: {session.game_mode}</div>
+                        <div className="session-info">
+                          <span className="session-mode">Mode: {session.game_mode}</span>
+                          <span className="session-participants">Participants: {participantCounts[session.id] || 0}</span>
+                        </div>
                       </button>
                     </li>
                   ))
@@ -185,15 +190,15 @@ function ActiveSession() {
           onClick={handleJoinClick}
           disabled={!selectedSession || joining}
         >
-          {joining ? 'Joining...' : 'Join Session'}
+          {joining ? t('ui.joining') : t('ui.joinSession')}
         </button>
       </div>
 
       {showLadderModal && (
         <div className="modal-overlay" onClick={() => setShowLadderModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Ladder Session Setup</h3>
-            <p>Enter your starting rank information</p>
+            <h3>{t('ui.ladderSessionSetup')}</h3>
+            <p>{t('ui.enterStartingRankInfo')}</p>
             
             <div className="form-group">
               <div className="dropdown-container" ref={tierDropdownRef}>
@@ -203,7 +208,7 @@ function ActiveSession() {
                   onBlur={() => setTimeout(() => setShowTierDropdown(false), 200)}
                 >
                   <span className="dropdown-label">
-                    {initialTier ? tiers.find(t => t.id === parseInt(initialTier))?.tier_name : 'Select tier...'}
+                    {initialTier ? tiers.find(t => t.id === parseInt(initialTier))?.tier_name : t('ui.selectTier')}
                   </span>
                   <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
@@ -240,7 +245,7 @@ function ActiveSession() {
                   onBlur={() => setTimeout(() => setShowWinsDropdown(false), 200)}
                 >
                   <span className="dropdown-label">
-                    {initialNetWins !== 0 ? initialNetWins : 'Select wins...'}
+                    {initialNetWins !== 0 ? initialNetWins : t('ui.selectWins')}
                   </span>
                   <svg className="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
@@ -276,14 +281,14 @@ function ActiveSession() {
                 className="cancel-btn" 
                 onClick={() => setShowLadderModal(false)}
               >
-                Cancel
+                {t('ui.cancel')}
               </button>
               <button 
                 className="confirm-btn" 
                 onClick={handleJoinSession}
                 disabled={!initialTier}
               >
-                Join Session
+                {t('ui.joinSession')}
               </button>
             </div>
           </div>

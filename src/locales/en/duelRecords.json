@@ -12,15 +12,15 @@
     "yourDeck": "Your Deck",
     "opponentDeck": "Opponent's Deck",
     "coinFlip": "Coin Flip",
-    "won": "Won",
-    "lost": "Lost",
+    "won": "Heads (Win)",
+    "lost": "Tails (Loss)",
     "turnOrder": "Turn Order",
     "first": "First",
     "second": "Second",
     "matchResult": "Match Result",
     "win": "Win",
     "loss": "Loss",
-    "ratingChange": "Rating Change",
+    "ratingChange": "Point Change",
     "submitting": "Submitting...",
     "searchYourDeck": "Search your deck...",
     "searchOpponentDeck": "Search opponent's deck..."
@@ -60,6 +60,9 @@
     "topDeck": "Top Deck",
     "overall": "Overall",
     "first": "1st",
-    "second": "2nd"
+    "second": "2nd",
+    "hideMyStats": "Hide My Stats",
+    "showMyStats": "Show My Stats",
+    "hidden": "Hidden"
   }
 }

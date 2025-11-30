@@ -1,94 +1,64 @@
 import './Matchups.css';
-import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../../../../lib/supabase';
-
-const COLORS = [
-  '#4ade80', '#fb923c', '#f87171', '#60a5fa', '#c084fc',
-  '#fbbf24', '#34d399', '#a78bfa', '#fb7185', '#818cf8'
-];
-
-const PIE_SIZE = 300;
-const PIE_RADIUS = 60; // % from center to place images
+import { useState, useMemo, useCallback } from 'react';
+import { useSessionData } from '../../../../contexts/SessionDataContext';
+import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 
 function Matchups({ sessionId, dateFilter, targetUserId = null }) {
-  const [matchups, setMatchups] = useState([]);
-  const [decks, setDecks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Try archive context first, fallback to active session context
+  let contextData;
+  try {
+    contextData = useArchiveSessionData();
+  } catch {
+    contextData = useSessionData();
+  }
+  const { personalMatchups, loading } = contextData;
+  const matchups = personalMatchups?.matchups || [];
+  const decks = personalMatchups?.decks || [];
+  
   const [viewMode, setViewMode] = useState('matrix');
   const [legendFilter, setLegendFilter] = useState('top10');
 
-  useEffect(() => {
-    fetchMatchups();
-  }, [sessionId, dateFilter, targetUserId]);
-
-  const fetchMatchups = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      let url = `http://localhost:3001/api/sessions/${sessionId}/matchups`;
-      const params = new URLSearchParams();
-      if (dateFilter !== 'all') params.append('days', dateFilter);
-      if (targetUserId) params.append('userId', targetUserId);
-      if (params.toString()) url += `?${params.toString()}`;
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+  // Memoize matchup lookup map to avoid O(n²) searches on every render
+  const matchupMap = useMemo(() => {
+    const map = new Map();
+    matchups.forEach(m => {
+      // Store both direct and inverse matchups
+      map.set(`${m.deckAId}-${m.deckBId}`, m);
+      map.set(`${m.deckBId}-${m.deckAId}`, {
+        deckAId: m.deckBId,
+        deckBId: m.deckAId,
+        wins: m.losses,
+        losses: m.wins,
+        winRate: Math.round((m.losses / (m.wins + m.losses)) * 100)
       });
-      
-      const data = await response.json();
-      if (data.matchups && data.decks) {
-        setMatchups(data.matchups);
-        setDecks(data.decks);
-      }
-    } catch (err) {
-      console.error('Failed to load matchups:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return map;
+  }, [matchups]);
 
   const getMatchup = (deckAId, deckBId) => {
-    // Check if we have direct matchup: you played deckA vs deckB
-    const direct = matchups.find(
-      m => m.deckAId === deckAId && m.deckBId === deckBId
-    );
-    if (direct) return direct;
-
-    // Check for inverse: you played deckB vs deckA (flip wins/losses)
-    const inverse = matchups.find(
-      m => m.deckAId === deckBId && m.deckBId === deckAId
-    );
-    if (inverse) {
-      return {
-        deckAId,
-        deckBId,
-        wins: inverse.losses,
-        losses: inverse.wins,
-        winRate: Math.round((inverse.losses / (inverse.wins + inverse.losses)) * 100)
-      };
-    }
-
-    return null;
+    return matchupMap.get(`${deckAId}-${deckBId}`) || null;
   };
 
-  const getColor = (winRate) => {
+  // Memoize color calculation
+  const getColor = useCallback((winRate) => {
     if (winRate === null) return 'rgba(255, 255, 255, 0.05)';
     if (winRate >= 60) return 'rgba(74, 222, 128, 0.5)';
     if (winRate >= 40) return 'rgba(251, 191, 36, 0.5)';
     return 'rgba(248, 113, 113, 0.5)';
-  };
+  }, []);
 
-
-  // Memoize most faced data
   const mostFacedData = useMemo(() => {
     const deckCounts = new Map();
     
     matchups.forEach(m => {
       const deck = decks.find(d => d.id === m.deckBId);
       if (deck) {
-        const cleanName = deck.name.trim();
-        const existing = deckCounts.get(deck.id) || { name: cleanName, value: 0, image: deck.image_url };
+        const existing = deckCounts.get(deck.id) || { 
+          id: deck.id,
+          name: deck.name, 
+          value: 0, 
+          image: deck.image_url 
+        };
         existing.value += m.wins + m.losses;
         deckCounts.set(deck.id, existing);
       }
@@ -123,50 +93,50 @@ function Matchups({ sessionId, dateFilter, targetUserId = null }) {
       </header>
 
       {viewMode === 'matrix' ? (
-        <div className="matchups-container">
-          <table className="matchups-table">
-        <thead>
-          <tr>
-            <th className="corner-cell"></th>
-            {decks.map(deck => (
-              <th key={`col-${deck.id}`} className="header-cell header-col">
-                <img src={deck.image_url} alt={deck.name} className="deck-image" title={deck.name} />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {decks.map(deckA => (
-            <tr key={`row-${deckA.id}`}>
-              <th className="header-cell header-row">
-                <img src={deckA.image_url} alt={deckA.name} className="deck-image" title={deckA.name} />
-              </th>
-              {decks.map(deckB => {
-                const matchup = getMatchup(deckA.id, deckB.id);
-                const winRate = matchup ? matchup.winRate : null;
-                
-                return (
-                  <td
-                    key={`${deckA.id}-${deckB.id}`}
-                    className="matchup-cell"
-                    style={{ backgroundColor: getColor(winRate) }}
-                    title={matchup ? `${deckA.name} vs ${deckB.name}: ${winRate}% (${matchup.wins}W-${matchup.losses}L)` : 'No data'}
-                  >
-                    {matchup ? (
-                      <>
-                        <div className="winrate">{winRate}%</div>
-                        <div className="record">{matchup.wins}-{matchup.losses}</div>
-                      </>
-                    ) : (
-                      <div className="no-matchup">-</div>
-                    )}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-          </tbody>
-        </table>
+        <div className="matrix-wrapper">
+          <table className="matrix-table">
+            <thead>
+              <tr>
+                <th className="corner-cell"></th>
+                {decks.map(deck => (
+                  <th key={`col-${deck.id}`} className="header-cell header-col">
+                    <img src={deck.image_url} alt={deck.name} className="deck-image" title={deck.name} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {decks.map(deckA => (
+                <tr key={`row-${deckA.id}`}>
+                  <th className="header-cell header-row">
+                    <img src={deckA.image_url} alt={deckA.name} className="deck-image" title={deckA.name} />
+                  </th>
+                  {decks.map(deckB => {
+                    const matchup = getMatchup(deckA.id, deckB.id);
+                    const winRate = matchup ? matchup.winRate : null;
+                    
+                    return (
+                      <td
+                        key={`${deckA.id}-${deckB.id}`}
+                        className="matchup-cell"
+                        style={{ backgroundColor: getColor(winRate) }}
+                        title={matchup ? `${deckA.name} vs ${deckB.name}: ${winRate}% (${matchup.wins}W-${matchup.losses}L)` : 'No data'}
+                      >
+                        {matchup ? (
+                          <>
+                            <div className="winrate">{winRate}%</div>
+                            <div className="record">{matchup.wins}-{matchup.losses}</div>
+                          </>
+                        ) : (
+                          <div className="no-matchup">-</div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="most-faced-layout">
@@ -188,7 +158,7 @@ function Matchups({ sessionId, dateFilter, targetUserId = null }) {
                     y="0"
                     width="1"
                     height="1"
-                    preserveAspectRatio="xMidYMid slice"
+                    preserveAspectRatio="xMidYMin slice"
                   />
                 </pattern>
               ))}
@@ -246,10 +216,10 @@ function Matchups({ sessionId, dateFilter, targetUserId = null }) {
             </div>
 
             <div className="legend-list">
-              {mostFacedData.map((deck, index) => {
+              {mostFacedData.map((deck) => {
                 const percentage = ((deck.value / total) * 100).toFixed(1);
                 return (
-                  <div key={deck.name} className="legend-item" title={deck.name}>
+                  <div key={deck.id} className="legend-item" title={deck.name}>
                     <span className="deck-name">{deck.name}</span>
                     <span className="games">{deck.value}</span>
                     <span className="percentage">{percentage}%</span>

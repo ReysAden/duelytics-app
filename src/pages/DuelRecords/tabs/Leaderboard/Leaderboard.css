@@ -6,6 +6,39 @@
   margin: 5px;
 }
 
+.leaderboard-header {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.hide-stats-toggle {
+  padding: 8px 14px;
+  background: rgba(10, 10, 20, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.hide-stats-toggle:hover:not(:disabled) {
+  background: rgba(10, 10, 20, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 1);
+}
+
+.hide-stats-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .leaderboard-wrapper {
   flex: 1;
   overflow: auto;
@@ -38,43 +71,54 @@
 .leaderboard-table thead {
   position: sticky;
   top: 0;
-  background: rgba(15, 15, 20, 0.98);
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 10;
 }
 
 .leaderboard-table th {
-  padding: 8px 6px;
+  padding: 12px 16px;
   text-align: left;
   color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .leaderboard-table td {
-  padding: 8px 6px;
+  padding: 12px 16px;
   color: rgba(255, 255, 255, 0.95);
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 .leaderboard-table td:first-child {
-  border-radius: 4px 0 0 4px;
+  border-radius: 6px 0 0 6px;
 }
 
 .leaderboard-table td:last-child {
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
 }
 
 .leaderboard-table tbody tr {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(10, 10, 20, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-bottom: 2px;
 }
 
 .leaderboard-table tbody tr:nth-child(even) {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(10, 10, 20, 0.5);
 }
 
 .leaderboard-table tbody tr:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .rank-col,
@@ -124,8 +168,8 @@
 }
 
 .deck-thumb {
-  width: 24px;
-  height: 14px;
+  width: 20px;
+  height: 12px;
   object-fit: cover;
   border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.1);

@@ -12,8 +12,8 @@
     "yourDeck": "당신의 덱",
     "opponentDeck": "대전 상대의 덱",
     "coinFlip": "코인토스",
-    "won": "승",
-    "lost": "패",
+    "won": "앞면(승리)",
+    "lost": "뒷면(패배)",
     "turnOrder": "선/후공",
     "first": "선공",
     "second": "후공",
@@ -60,6 +60,9 @@
     "topDeck": "탑 덱",
     "overall": "전체",
     "first": "선공",
-    "second": "후공"
+    "second": "후공",
+    "hideMyStats": "내 전적 숨기기",
+    "showMyStats": "내 전적 표시",
+    "hidden": "숨김"
   }
 }

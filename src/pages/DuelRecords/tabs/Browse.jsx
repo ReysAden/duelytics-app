@@ -1,16 +1,21 @@
 import './Browse.css';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 import PersonalStats from './PersonalStats/PersonalStats';
 
 function Browse({ sessionData }) {
+  const { t: tDuel } = useTranslation(['duelRecords']);
+  const { t: tCommon } = useTranslation(['common']);
   const { sessionId } = useParams();
   const [participants, setParticipants] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [userSearch, setUserSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState('Overview');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [availableDates, setAvailableDates] = useState([]);
 
   useEffect(() => {
     fetchParticipants();
@@ -36,66 +41,109 @@ function Browse({ sessionData }) {
     }
   };
 
-  const filteredParticipants = participants.filter(participant =>
-    participant.username.toLowerCase().includes(userSearch.toLowerCase())
-  );
 
   if (loading) {
-    return <div className="browse-container">Loading participants...</div>;
+    return <div className="browse-container">{tCommon('common.loading')}</div>;
   }
 
   return (
     <div className="browse-container">
       {!selectedUser ? (
         <div className="user-selector">
-          <h2>Browse User Stats</h2>
-          <p className="subtitle">Select a user to view their stats from this session</p>
-          
           <div className="combobox">
-            <input
-              type="text"
+            <button
               className="field-select"
-              placeholder="Search for a user..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
               onClick={() => setShowDropdown(!showDropdown)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-            />
-            <svg className={`dropdown-icon ${showDropdown ? 'open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {showDropdown && filteredParticipants.length > 0 && (
+            >
+              <span>
+                {selectedUser ? selectedUser.username : tDuel('browse.searchUser')}
+              </span>
+              <svg className={`dropdown-icon ${showDropdown ? 'open' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.2 3.94a.75.75 0 01-1.02 0L5.25 8.29a.75.75 0 01-.02-1.08z" clipRule="evenodd"/>
+              </svg>
+            </button>
+            {showDropdown && (
               <div className="dropdown">
-                {filteredParticipants.map(participant => (
-                  <div
-                    key={participant.user_id}
-                    className="dropdown-item"
-                    onMouseDown={() => {
-                      setSelectedUser(participant);
-                      setUserSearch('');
-                      setShowDropdown(false);
-                    }}
-                  >
-                    {participant.username}
+                {participants.length > 0 ? (
+                  participants.map(participant => (
+                    <button
+                      key={participant.user_id}
+                      className="dropdown-item"
+                      onMouseDown={() => {
+                        setSelectedUser(participant);
+                        setShowDropdown(false);
+                      }}
+                    >
+                      {participant.username}
+                    </button>
+                  ))
+                ) : (
+                  <div style={{ padding: '12px 16px', color: '#9ca3af', textAlign: 'center', fontSize: '14px' }}>
+                    {tDuel('browse.noParticipants')}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
 
           {participants.length === 0 && (
-            <p className="no-participants">No participants found in this session</p>
+            <p className="no-participants">{tDuel('browse.noParticipants')}</p>
           )}
         </div>
       ) : (
         <div className="user-stats-view">
           <div className="user-stats-header">
             <button className="back-to-browse" onClick={() => setSelectedUser(null)}>
-              ← Back to Browse
+              ←
             </button>
-            <h2>Viewing stats for: {selectedUser.username}</h2>
+            <div className="viewing-label">
+              <span>{selectedUser.username}</span>
+            </div>
+            <nav className="subtab-nav-inline">
+              <button
+                className={`subtab-btn ${activeSubTab === 'Overview' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('Overview')}
+              >
+                {tDuel('personalStats.overview')}
+              </button>
+              {sessionData?.gameMode === 'rated' || sessionData?.gameMode === 'duelist_cup' ? (
+                <button
+                  className={`subtab-btn ${activeSubTab === 'Points Tracker' ? 'active' : ''}`}
+                  onClick={() => setActiveSubTab('Points Tracker')}
+                >
+                  {tDuel('personalStats.pointsTracker')}
+                </button>
+              ) : null}
+              <button
+                className={`subtab-btn ${activeSubTab === 'Deck Analysis' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('Deck Analysis')}
+              >
+                {tDuel('personalStats.deckAnalysis')}
+              </button>
+              <button
+                className={`subtab-btn ${activeSubTab === 'Coin Flip' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('Coin Flip')}
+              >
+                {tDuel('personalStats.coinFlip')}
+              </button>
+              <button
+                className={`subtab-btn ${activeSubTab === 'Matchups' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('Matchups')}
+              >
+                {tDuel('personalStats.matchups')}
+              </button>
+            </nav>
           </div>
-          <PersonalStats sessionData={sessionData} targetUserId={selectedUser.user_id} />
+          <PersonalStats 
+            sessionData={sessionData} 
+            targetUserId={selectedUser.user_id}
+            activeSubTab={activeSubTab}
+            onSubTabChange={setActiveSubTab}
+            dateFilter={dateFilter}
+            setDateFilter={setDateFilter}
+            availableDates={availableDates}
+            setAvailableDates={setAvailableDates}
+          />
         </div>
       )}
     </div>
