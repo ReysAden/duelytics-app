@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
+import { useSessionContext } from '../../../../contexts/SessionContext';
 import './ManageSessions.css';
+import { API_URL } from '../../../../config/api';
 
 function ManageSessions() {
   const { t } = useTranslation(['common']);
+  const { refreshSessions } = useSessionContext();
   const [activeSessions, setActiveSessions] = useState([]);
   const [archivedSessions, setArchivedSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
@@ -33,8 +36,8 @@ function ManageSessions() {
   const fetchSessions = async () => {
     try {
       const [activeRes, archivedRes] = await Promise.all([
-        fetch('http://localhost:3001/api/sessions?status=active'),
-        fetch('http://localhost:3001/api/sessions?status=archived')
+        fetch(`${API_URL}/sessions?status=active`),
+        fetch(`${API_URL}/sessions?status=archived`)
       ]);
       
       const activeData = await activeRes.json();
@@ -59,7 +62,7 @@ function ManageSessions() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/admin/sessions/${selectedSession}/archive`, {
+      const response = await fetch(`${API_URL}/admin/sessions/${selectedSession}/archive`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -76,6 +79,7 @@ function ManageSessions() {
       setSuccess(t('ui.archived'));
       setSelectedSession('');
       setSelectedStatus('');
+      refreshSessions(); // Refresh context
       fetchSessions(); // Refresh list
     } catch (err) {
       setError(err.message || t('ui.failedArchiveSession'));
@@ -97,7 +101,7 @@ function ManageSessions() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/admin/sessions/${selectedSession}`, {
+      const response = await fetch(`${API_URL}/admin/sessions/${selectedSession}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -116,6 +120,7 @@ function ManageSessions() {
       setSelectedStatus('');
       setShowDeleteModal(false);
       setDeleteAction(null);
+      refreshSessions(); // Refresh context
       fetchSessions();
     } catch (err) {
       setError(err.message || t('ui.failedDeleteSession'));

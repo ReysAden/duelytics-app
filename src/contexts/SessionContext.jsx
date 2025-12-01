@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, db } from '../lib/supabase';
+import { API_URL } from '../config/api';
 
 const SessionContext = createContext();
 
@@ -11,34 +12,33 @@ export function SessionProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const subscriptionRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [activeRes, archivedRes, tiersRes] = await Promise.all([
-          fetch('http://localhost:3001/api/sessions?status=active'),
-          fetch('http://localhost:3001/api/sessions?status=archived'),
-          fetch('http://localhost:3001/api/ladder-tiers')
-        ]);
+  const fetchData = async () => {
+    try {
+      const [activeRes, archivedRes, tiersRes] = await Promise.all([
+        fetch(`${API_URL}/sessions?status=active`),
+        fetch(`${API_URL}/sessions?status=archived`),
+        fetch(`${API_URL}/ladder-tiers`)
+      ]);
 
-        const activeData = await activeRes.json();
-        const archivedData = await archivedRes.json();
-        const tiersData = await tiersRes.json();
+      const activeData = await activeRes.json();
+      const archivedData = await archivedRes.json();
+      const tiersData = await tiersRes.json();
 
-        if (activeData.sessions) {
-          setSessions(activeData.sessions);
-          // Fetch participant counts in parallel
-          fetchParticipantCounts(activeData.sessions);
-        }
-        if (archivedData.sessions) setArchivedSessions(archivedData.sessions);
-        if (tiersData.tiers) setTiers(tiersData.tiers);
-      } catch (err) {
-        // Silent fail
-      } finally {
-        setLoading(false);
+      if (activeData.sessions) {
+        setSessions(activeData.sessions);
+        // Fetch participant counts in parallel
+        fetchParticipantCounts(activeData.sessions);
       }
-    };
+      if (archivedData.sessions) setArchivedSessions(archivedData.sessions);
+      if (tiersData.tiers) setTiers(tiersData.tiers);
+    } catch (err) {
+      // Silent fail
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const fetchParticipantCounts = async (activeSessions) => {
+  const fetchParticipantCounts = async (activeSessions) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
@@ -46,7 +46,7 @@ export function SessionProvider({ children }) {
         // Fetch all participant counts in parallel
         const countPromises = activeSessions.map(async (s) => {
           try {
-            const response = await fetch(`http://localhost:3001/api/sessions/${s.id}/participants`, {
+            const response = await fetch(`${API_URL}/sessions/${s.id}/participants`, {
               headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             const data = await response.json();
@@ -67,6 +67,7 @@ export function SessionProvider({ children }) {
       }
     };
 
+  useEffect(() => {
     fetchData();
 
     // Setup single realtime subscription (INSERT/UPDATE/DELETE)
@@ -100,8 +101,13 @@ export function SessionProvider({ children }) {
     };
   }, []);
 
+  // Expose refresh function for manual refreshes
+  const refreshSessions = () => {
+    fetchData();
+  };
+
   return (
-    <SessionContext.Provider value={{ sessions, archivedSessions, tiers, participantCounts, loading }}>
+    <SessionContext.Provider value={{ sessions, archivedSessions, tiers, participantCounts, loading, refreshSessions }}>
       {children}
     </SessionContext.Provider>
   );

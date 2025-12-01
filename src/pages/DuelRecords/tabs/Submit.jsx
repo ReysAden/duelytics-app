@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useSessionData } from '../../../contexts/SessionDataContext';
+import { API_URL } from '../../../config/api';
 
 function Submit({ onDuelSubmitted }) {
   const { t } = useTranslation(['duelRecords']);
@@ -72,22 +73,28 @@ function Submit({ onDuelSubmitted }) {
     window.electronAPI?.onDuelSubmitted?.(handleDuelSubmitted);
   }, [sessionId, onDuelSubmitted]);
 
-  // Load last selected deck for this session
+  // Load last selected deck for this session and user
   useEffect(() => {
-    if (decks.length > 0 && sessionId) {
-      const savedDeckId = localStorage.getItem(`lastDeck_${sessionId}`);
-      if (savedDeckId) {
-        const savedDeck = decks.find(d => d.id === parseInt(savedDeckId));
-        if (savedDeck) {
-          setFormData(prev => ({ ...prev, yourDeck: savedDeck }));
+    const loadLastDeck = async () => {
+      if (decks.length > 0 && sessionId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const savedDeckId = localStorage.getItem(`lastDeck_${session.user.id}_${sessionId}`);
+          if (savedDeckId) {
+            const savedDeck = decks.find(d => d.id === parseInt(savedDeckId));
+            if (savedDeck) {
+              setFormData(prev => ({ ...prev, yourDeck: savedDeck }));
+            }
+          }
         }
       }
-    }
+    };
+    loadLastDeck();
   }, [decks, sessionId]);
 
   const fetchSessionData = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`);
+      const response = await fetch(`${API_URL}/sessions/${sessionId}`);
       const data = await response.json();
       if (data.session) {
         setSessionData(data.session);
@@ -99,7 +106,7 @@ function Submit({ onDuelSubmitted }) {
 
   const fetchDecks = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/decks');
+      const response = await fetch(`${API_URL}/decks`);
       const data = await response.json();
       if (data.decks) {
         setDecks(data.decks);
@@ -131,7 +138,7 @@ function Submit({ onDuelSubmitted }) {
         pointsInput: formData.ratingChange ? parseFloat(formData.ratingChange) : 0
       };
 
-      const response = await fetch(`http://localhost:3001/api/duels`, {
+      const response = await fetch(`${API_URL}/duels`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +150,6 @@ function Submit({ onDuelSubmitted }) {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('✅ Duel submitted successfully via REST API:', data);
         
         // Invalidate cache
         invalidateCache([
@@ -162,7 +168,6 @@ function Submit({ onDuelSubmitted }) {
         
         // Force refetch all data in background so tabs show fresh data immediately when clicked
         setTimeout(() => {
-          console.log('🔄 Background refetch after duel submission');
           fetchLeaderboardImmediate();
           fetchDuelsImmediate();
           fetchDeckWinratesImmediate();
@@ -186,7 +191,6 @@ function Submit({ onDuelSubmitted }) {
         setOppDeckSearch('');
         if (onDuelSubmitted) onDuelSubmitted();
       } else {
-        console.error('❌ Duel submission failed:', data);
         toast.error(data.message || data.error || 'Failed to submit duel');
       }
     } catch (err) {
@@ -229,7 +233,7 @@ function Submit({ onDuelSubmitted }) {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/duels/last?sessionId=${sessionId}`, {
+      const response = await fetch(`${API_URL}/duels/last?sessionId=${sessionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
@@ -277,9 +281,12 @@ function Submit({ onDuelSubmitted }) {
                     <div
                       key={deck.id}
                       className="dropdown-item"
-                      onMouseDown={() => {
+                      onMouseDown={async () => {
                         setFormData(prev => ({ ...prev, yourDeck: deck }));
-                        localStorage.setItem(`lastDeck_${sessionId}`, deck.id);
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session?.user) {
+                          localStorage.setItem(`lastDeck_${session.user.id}_${sessionId}`, deck.id);
+                        }
                         setYourDeckSearch('');
                         setShowYourDeckDropdown(false);
                       }}

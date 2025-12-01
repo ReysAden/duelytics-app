@@ -4,6 +4,7 @@ import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
 import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 import './DuelHistory.css';
+import { API_URL } from '../../../../config/api';
 
 export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = false }) {
   const { t } = useTranslation('duelRecords');
@@ -22,7 +23,7 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch(`http://localhost:3001/api/duels/${duelId}`, {
+      const response = await fetch(`${API_URL}/duels/${duelId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

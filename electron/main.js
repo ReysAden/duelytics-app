@@ -44,10 +44,11 @@ function createWindow() {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'; " +
-          "script-src 'self' 'unsafe-inline'; " +
-          "style-src 'self' 'unsafe-inline'; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.discord.com https://js.hcaptcha.com https://*.hcaptcha.com; " +
+          "style-src 'self' 'unsafe-inline' https://*.discord.com https://*.hcaptcha.com; " +
           "img-src 'self' data: https:; " +
-          "connect-src 'self' http://localhost:3001 https://onamlvzviwqkqlaejlra.supabase.co wss://onamlvzviwqkqlaejlra.supabase.co; " +
+          "connect-src 'self' https://duelytics-app-production.up.railway.app https://onamlvzviwqkqlaejlra.supabase.co wss://onamlvzviwqkqlaejlra.supabase.co https://*.discord.com wss://*.discord.gg https://*.hcaptcha.com; " +
+          "frame-src 'self' https://*.discord.com https://*.hcaptcha.com; " +
           "font-src 'self' data:;"
         ]
       }

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase, db } from '../lib/supabase';
+import { API_URL } from '../config/api';
 
 const SessionDataContext = createContext();
 
@@ -45,31 +46,31 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
 
       // Fetch in parallel (7 base + 3 personal stats = 10 total)
       const [sessionRes, statsRes, decksRes, leaderboardRes, matchupsRes, duelsRes, deckWinratesRes, overviewRes, deckAnalysisRes, personalMatchupsRes] = await Promise.all([
-        fetch(`http://localhost:3001/api/sessions/${sessionId}`),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/stats`, {
+        fetch(`${API_URL}/sessions/${sessionId}`),
+        fetch(`${API_URL}/sessions/${sessionId}/stats`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/decks`),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/leaderboard`, {
+        fetch(`${API_URL}/decks`),
+        fetch(`${API_URL}/sessions/${sessionId}/leaderboard`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+        fetch(`${API_URL}/sessions/${sessionId}/session-matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/duels`, {
+        fetch(`${API_URL}/sessions/${sessionId}/duels`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-winrates`, {
+        fetch(`${API_URL}/sessions/${sessionId}/deck-winrates`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
         // Personal stats endpoints
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/overview`, {
+        fetch(`${API_URL}/sessions/${sessionId}/overview`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-analysis`, {
+        fetch(`${API_URL}/sessions/${sessionId}/deck-analysis`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+        fetch(`${API_URL}/sessions/${sessionId}/matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         })
       ]);
@@ -115,7 +116,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/leaderboard`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/leaderboard`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -133,7 +134,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/stats`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/stats`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -151,7 +152,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/duels`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/duels`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -175,7 +176,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+        const response = await fetch(`${API_URL}/sessions/${sessionId}/session-matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         });
         const data = await response.json();
@@ -195,7 +196,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-winrates`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/deck-winrates`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -213,7 +214,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/overview`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/overview`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -231,7 +232,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-analysis`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/deck-analysis`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -249,7 +250,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/matchups`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -267,7 +268,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/session-matchups`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const data = await response.json();
@@ -370,17 +371,13 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
     switch (activeTab) {
       case 'leaderboard':
         if (now - lastFetchRef.current.leaderboard > CACHE_TIME) {
-          console.log('🔄 Leaderboard tab switched - fetching fresh data');
           fetchLeaderboardImmediate();
           lastFetchRef.current.leaderboard = now;
-        } else {
-          console.log('✅ Leaderboard using cached data (' + Math.round((now - lastFetchRef.current.leaderboard)/1000) + 's old)');
         }
         break;
         
       case 'history':
         if (now - lastFetchRef.current.duels > CACHE_TIME) {
-          console.log('🔄 Duel History tab switched - fetching fresh data');
           fetchDuelsImmediate();
           lastFetchRef.current.duels = now;
         }
@@ -388,7 +385,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
         
       case 'matchup-matrix':
         if (now - lastFetchRef.current.matchups > CACHE_TIME) {
-          console.log('🔄 Matchup Matrix tab switched - fetching fresh data');
           scheduleMatchupsRefetch();
           lastFetchRef.current.matchups = now;
         }
@@ -397,7 +393,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       case 'personal-stats':
         // User-specific data, refresh on tab switch
         if (now - lastFetchRef.current.userStats > CACHE_TIME || now - lastFetchRef.current.personalOverview > CACHE_TIME || now - lastFetchRef.current.personalDeckAnalysis > CACHE_TIME || now - lastFetchRef.current.personalMatchups > CACHE_TIME) {
-          console.log('🔄 Personal Stats tab switched - fetching fresh data');
           fetchUserStatsImmediate();
           fetchPersonalOverviewImmediate();
           fetchPersonalDeckAnalysisImmediate();
@@ -406,19 +401,14 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
           lastFetchRef.current.personalOverview = now;
           lastFetchRef.current.personalDeckAnalysis = now;
           lastFetchRef.current.personalMatchups = now;
-        } else {
-          console.log('✅ Personal Stats using cached data (' + Math.round((now - lastFetchRef.current.userStats)/1000) + 's old)');
         }
         break;
         
       case 'deck-winrate':
         // Session-wide deck winrates, refresh on tab switch
         if (now - lastFetchRef.current.deckWinrates > CACHE_TIME) {
-          console.log('🔄 Deck Winrates tab switched - fetching fresh data');
           fetchDeckWinratesImmediate();
           lastFetchRef.current.deckWinrates = now;
-        } else {
-          console.log('✅ Deck Winrates using cached data (' + Math.round((now - lastFetchRef.current.deckWinrates)/1000) + 's old)');
         }
         break;
     }
@@ -434,7 +424,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
     datasets.forEach(key => {
       lastFetchRef.current[key] = 0; // Force next fetch
     });
-    console.log('🗑️ Cache invalidated for:', datasets);
   }, []);
   
   const value = {

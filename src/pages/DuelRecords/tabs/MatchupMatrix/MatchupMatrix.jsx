@@ -19,15 +19,19 @@ function MatchupMatrix() {
   const matchupMap = useMemo(() => {
     const map = new Map();
     matchups.forEach(m => {
-      // Store both direct and inverse matchups
+      // Store direct matchup
       map.set(`${m.deckAId}-${m.deckBId}`, m);
-      map.set(`${m.deckBId}-${m.deckAId}`, {
-        deckAId: m.deckBId,
-        deckBId: m.deckAId,
-        wins: m.losses,
-        losses: m.wins,
-        winRate: Math.round((m.losses / (m.wins + m.losses)) * 100)
-      });
+      
+      // Only create inverse for non-mirror matchups
+      if (m.deckAId !== m.deckBId) {
+        map.set(`${m.deckBId}-${m.deckAId}`, {
+          deckAId: m.deckBId,
+          deckBId: m.deckAId,
+          wins: m.losses,
+          losses: m.wins,
+          winRate: Math.round((m.losses / (m.wins + m.losses)) * 100)
+        });
+      }
     });
     return map;
   }, [matchups]);

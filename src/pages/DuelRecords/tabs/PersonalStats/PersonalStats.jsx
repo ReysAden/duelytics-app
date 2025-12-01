@@ -8,6 +8,7 @@ import PointsTracker from './PointsTracker';
 import DeckAnalysis from './DeckAnalysis';
 import CoinFlip from './CoinFlip';
 import Matchups from './Matchups';
+import { API_URL } from '../../../../config/api';
 
 function PersonalStats({ sessionData, targetUserId = null, activeSubTab: propActiveSubTab = null, onSubTabChange: propOnSubTabChange = null, dateFilter: propDateFilter = null, availableDates: propAvailableDates = null, setAvailableDates: propSetAvailableDates = null }) {
   const { t } = useTranslation('duelRecords');
@@ -58,8 +59,8 @@ function PersonalStats({ sessionData, targetUserId = null, activeSubTab: propAct
       if (!session) return;
 
       const url = targetUserId 
-        ? `http://localhost:3001/api/sessions/${sessionId}/dates?userId=${targetUserId}`
-        : `http://localhost:3001/api/sessions/${sessionId}/dates`;
+        ? `${API_URL}/sessions/${sessionId}/dates?userId=${targetUserId}`
+        : `${API_URL}/sessions/${sessionId}/dates`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

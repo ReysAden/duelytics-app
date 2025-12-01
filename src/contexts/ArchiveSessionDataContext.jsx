@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { API_URL } from '../config/api';
 
 const ArchiveSessionDataContext = createContext();
 
@@ -49,31 +50,31 @@ export function ArchiveSessionDataProvider({ sessionId, children }) {
         deckAnalysisRes,
         personalMatchupsRes
       ] = await Promise.all([
-        fetch(`http://localhost:3001/api/sessions/${sessionId}`),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/stats`, {
+        fetch(`${API_URL}/sessions/${sessionId}`),
+        fetch(`${API_URL}/sessions/${sessionId}/stats`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/decks`),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/leaderboard`, {
+        fetch(`${API_URL}/decks`),
+        fetch(`${API_URL}/sessions/${sessionId}/leaderboard`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+        fetch(`${API_URL}/sessions/${sessionId}/matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/duels`, {
+        fetch(`${API_URL}/sessions/${sessionId}/duels`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-winrates`, {
+        fetch(`${API_URL}/sessions/${sessionId}/deck-winrates`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
         // Personal stats endpoints
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/overview`, {
+        fetch(`${API_URL}/sessions/${sessionId}/overview`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/deck-analysis`, {
+        fetch(`${API_URL}/sessions/${sessionId}/deck-analysis`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`http://localhost:3001/api/sessions/${sessionId}/matchups`, {
+        fetch(`${API_URL}/sessions/${sessionId}/matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         })
       ]);

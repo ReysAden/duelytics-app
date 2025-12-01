@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 import PersonalStats from './PersonalStats/PersonalStats';
+import { API_URL } from '../../../config/api';
 
 function Browse({ sessionData }) {
   const { t: tDuel } = useTranslation(['duelRecords']);
@@ -24,7 +25,7 @@ function Browse({ sessionData }) {
   const fetchParticipants = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/participants`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/participants`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }

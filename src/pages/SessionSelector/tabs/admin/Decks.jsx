@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import DeckCard from '../../../../components/DeckCard';
 import './Decks.css';
+import { API_URL } from '../../../../config/api';
 
 function Decks() {
   const { t } = useTranslation(['common']);
@@ -21,7 +22,7 @@ function Decks() {
 
   const fetchDecks = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/decks');
+      const response = await fetch(`${API_URL}/decks`);
       const data = await response.json();
       
       if (data.decks) {
@@ -44,7 +45,7 @@ function Decks() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/decks/${deckToDelete}`, {
+      const response = await fetch(`${API_URL}/decks/${deckToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
@@ -97,7 +98,7 @@ function Decks() {
       }
 
       // Create deck
-      const response = await fetch('http://localhost:3001/api/decks', {
+      const response = await fetch(`${API_URL}/decks`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`

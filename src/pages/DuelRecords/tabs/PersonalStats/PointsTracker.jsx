@@ -13,6 +13,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { API_URL } from '../../../../config/api';
 
 ChartJS.register(
   CategoryScale,
@@ -47,7 +48,7 @@ function PointsTracker({ sessionId, dateFilter, targetUserId = null }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      let url = `http://localhost:3001/api/sessions/${sessionId}/points-tracker`;
+      let url = `${API_URL}/sessions/${sessionId}/points-tracker`;
       const params = new URLSearchParams();
       if (dateFilter !== 'all') params.append('days', dateFilter);
       if (targetUserId) params.append('userId', targetUserId);

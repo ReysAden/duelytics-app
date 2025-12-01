@@ -9,8 +9,10 @@ const createUserRateLimiter = (options) => {
     legacyHeaders: false,
     // Use user ID as key for per-user limiting
     keyGenerator: (req) => {
-      // Fallback to IP if user not authenticated (shouldn't happen with authenticate middleware)
-      return req.user?.discord_id || req.ip;
+      // Always use user ID if authenticated
+      if (req.user?.discord_id) return req.user.discord_id;
+      // Fallback to 'anonymous' for non-authenticated requests (shouldn't happen with authenticate middleware)
+      return 'anonymous';
     },
     handler: (req, res) => {
       res.status(429).json({

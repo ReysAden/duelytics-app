@@ -11,6 +11,7 @@ import MatchupMatrix from './tabs/MatchupMatrix/MatchupMatrix';
 import DuelHistory from './tabs/DuelHistory/DuelHistory';
 import Leaderboard from './tabs/Leaderboard/Leaderboard';
 import { ArchiveSessionDataProvider } from '../../contexts/ArchiveSessionDataContext';
+import { API_URL } from '../../config/api';
 
 function ArchiveDuelRecords() {
   const { t } = useTranslation(['duelRecords']);
@@ -32,7 +33,7 @@ function ArchiveDuelRecords() {
 
   const fetchSessionData = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`);
+      const response = await fetch(`${API_URL}/sessions/${sessionId}`);
       const data = await response.json();
       if (data.session) {
         setSessionData({
@@ -50,7 +51,7 @@ function ArchiveDuelRecords() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}/stats`, {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/stats`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }

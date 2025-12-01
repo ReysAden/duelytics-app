@@ -4,6 +4,7 @@ import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
 import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
 import './Leaderboard.css';
+import { API_URL } from '../../../../config/api';
 
 function Leaderboard() {
   const { t } = useTranslation(['common', 'duelRecords']);
@@ -29,7 +30,7 @@ function Leaderboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const res = await fetch(`http://localhost:3001/api/auth/me`, {
+      const res = await fetch(`${API_URL}/auth/me`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const me = await res.json();
@@ -44,7 +45,7 @@ function Leaderboard() {
       setToggling(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const res = await fetch(`http://localhost:3001/api/sessions/user/preferences`, {
+      const res = await fetch(`${API_URL}/sessions/user/preferences`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

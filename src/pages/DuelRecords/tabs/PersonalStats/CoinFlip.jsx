@@ -1,6 +1,7 @@
 import './CoinFlip.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
+import { API_URL } from '../../../../config/api';
 
 function CoinFlip({ sessionId, dateFilter, targetUserId = null }) {
   const [stats, setStats] = useState({
@@ -30,7 +31,7 @@ function CoinFlip({ sessionId, dateFilter, targetUserId = null }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      let url = `http://localhost:3001/api/sessions/${sessionId}/coin-flip`;
+      let url = `${API_URL}/sessions/${sessionId}/coin-flip`;
       const params = new URLSearchParams();
       if (dateFilter !== 'all') params.append('days', dateFilter);
       if (targetUserId) params.append('userId', targetUserId);

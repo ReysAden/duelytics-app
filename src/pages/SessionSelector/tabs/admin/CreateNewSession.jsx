@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
+import { useSessionContext } from '../../../../contexts/SessionContext';
 import './CreateNewSession.css';
+import { API_URL } from '../../../../config/api';
 
 const GAME_MODES = [
   { label: 'Duelist Cup', value: 'duelist_cup' },
@@ -11,6 +13,7 @@ const GAME_MODES = [
 
 function CreateNewSession() {
   const { t } = useTranslation(['common']);
+  const { refreshSessions } = useSessionContext();
   const [sessionName, setSessionName] = useState('');
   const [gameMode, setGameMode] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -53,7 +56,7 @@ function CreateNewSession() {
       };
 
       // Create session via backend
-      const response = await fetch('http://localhost:3001/api/admin/sessions', {
+      const response = await fetch(`${API_URL}/admin/sessions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -69,6 +72,8 @@ function CreateNewSession() {
       }
 
       setSuccess(t('ui.created'));
+      // Refresh sessions list
+      refreshSessions();
       // Reset form
       setSessionName('');
       setGameMode('');

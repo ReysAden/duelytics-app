@@ -6,7 +6,7 @@ import './DiscordVerification.css';
 
 function DiscordVerification() {
   const navigate = useNavigate();
-  const { guildMemberVerified, verificationLoading, verifyGuildMembership } = useAuth();
+  const { guildMemberVerified, verificationLoading, verifyGuildMembership, resetVerification } = useAuth();
   const [user, setUser] = useState(null);
   const [checked, setChecked] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -46,7 +46,8 @@ function DiscordVerification() {
 
   const handleRetry = async () => {
     setRetrying(true);
-    // Reset cache for retry
+    // Clear verification cache before retry
+    resetVerification();
     await checkMembership();
   };
 

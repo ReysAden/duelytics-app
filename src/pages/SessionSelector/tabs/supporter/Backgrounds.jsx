@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import './Backgrounds.css';
+import { API_URL } from '../../../../config/api';
 
 // Cache for backgrounds list (5 min TTL)
 let backgroundsCache = null;
@@ -39,7 +40,7 @@ function Backgrounds({ user }) {
     try {
       console.log('📥 Backgrounds: Fetching from API');
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('http://localhost:3001/api/backgrounds', {
+      const response = await fetch(`${API_URL}/backgrounds`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -70,7 +71,7 @@ function Backgrounds({ user }) {
     try {
       console.log('📥 Backgrounds: Fetching preference from API');
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('http://localhost:3001/api/backgrounds/preference', {
+      const response = await fetch(`${API_URL}/backgrounds/preference`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
@@ -150,7 +151,7 @@ function Backgrounds({ user }) {
       formData.append('image', compressedImage);
 
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('http://localhost:3001/api/backgrounds', {
+      const response = await fetch(`${API_URL}/backgrounds`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -183,7 +184,7 @@ function Backgrounds({ user }) {
       localStorage.setItem('user_background', backgroundUrl);
 
       const { data: { session } } = await supabase.auth.getSession();
-      await fetch('http://localhost:3001/api/backgrounds/preference', {
+      await fetch(`${API_URL}/backgrounds/preference`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -219,7 +220,7 @@ function Backgrounds({ user }) {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:3001/api/backgrounds/${backgroundToDelete.id}`, {
+      const response = await fetch(`${API_URL}/backgrounds/${backgroundToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`

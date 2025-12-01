@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { API_URL } from '../config/api';
 
 export function useBackgroundPreference(user) {
   useEffect(() => {
@@ -10,16 +11,14 @@ export function useBackgroundPreference(user) {
         // Check if already cached in localStorage
         const cached = localStorage.getItem('user_background');
         if (cached) {
-          console.log('📦 Background preference: Using localStorage cache');
           return;
         }
 
         // Fetch from API
-        console.log('📥 Background preference: Fetching from API');
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const response = await fetch('http://localhost:3001/api/backgrounds/preference', {
+        const response = await fetch(`${API_URL}/backgrounds/preference`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
           }
@@ -33,7 +32,6 @@ export function useBackgroundPreference(user) {
             
             // Apply immediately
             document.body.style.backgroundImage = `url('${data.background_url}')`;
-            console.log('✅ Background preference: Applied from API');
           }
         }
       } catch (error) {

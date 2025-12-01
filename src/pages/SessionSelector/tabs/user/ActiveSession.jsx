@@ -4,6 +4,7 @@ import { supabase } from '../../../../lib/supabase';
 import { useSessionContext } from '../../../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import './ActiveSession.css';
+import { API_URL } from '../../../../config/api';
 
 function ActiveSession() {
   const { t } = useTranslation(['common']);
@@ -60,7 +61,7 @@ function ActiveSession() {
     if (session?.game_mode === 'ladder') {
       try {
         const { data: { session: authSession } } = await supabase.auth.getSession();
-        const response = await fetch(`http://localhost:3001/api/sessions/${selectedSession}/participant-check`, {
+        const response = await fetch(`${API_URL}/sessions/${selectedSession}/participant-check`, {
           headers: {
             'Authorization': `Bearer ${authSession?.access_token}`
           }
@@ -104,7 +105,7 @@ function ActiveSession() {
         body.initialNetWins = initialNetWins;
       }
 
-      const response = await fetch('http://localhost:3001/api/sessions/join', {
+      const response = await fetch(`${API_URL}/sessions/join`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

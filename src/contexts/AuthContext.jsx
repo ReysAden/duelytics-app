@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { API_URL } from '../config/api'
 
 const AuthContext = createContext()
 
@@ -13,7 +14,7 @@ export function AuthProvider({ children }) {
   // Sync user roles from backend
   const syncUserRoles = async (session) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/sync', {
+      const response = await fetch(`${API_URL}/auth/sync`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -51,7 +52,7 @@ export function AuthProvider({ children }) {
 
     setVerificationLoading(true)
     try {
-      const response = await fetch('http://localhost:3001/api/auth/check-guild', {
+      const response = await fetch(`${API_URL}/auth/check-guild`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -64,7 +65,6 @@ export function AuthProvider({ children }) {
       }
       
       const data = await response.json()
-      console.log('Guild verification result:', data)
       
       // Cache result in memory AND localStorage
       setGuildMemberVerified(data.isGuildMember)

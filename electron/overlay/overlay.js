@@ -132,8 +132,8 @@ const submitBtn = document.getElementById('submitBtn');
 const ratingField = document.getElementById('ratingField');
 const sessionNameEl = document.getElementById('sessionName');
 
-// API base URL - works for both dev and prod
-const API_BASE_URL = 'http://localhost:3001/api';
+// API base URL - use production Railway URL
+const API_BASE_URL = 'https://duelytics-app-production.up.railway.app/api';
 
 // Fetch decks
 async function fetchDecks() {
