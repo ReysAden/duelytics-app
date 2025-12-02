@@ -26,6 +26,7 @@ export function Sidebar({ activeTab = 'active-session', onTabChange = () => {}, 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      window.location.reload();
     } catch (error) {
       console.error('Logout failed:', error);
     }
