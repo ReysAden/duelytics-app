@@ -1,7 +1,7 @@
 import { supabase } from './lib/supabase'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
 import { Background } from './components/Background'
