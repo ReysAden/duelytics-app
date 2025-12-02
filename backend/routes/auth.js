@@ -17,7 +17,7 @@ router.get('/discord', (req, res) => {
 
 // Handle OAuth callback from Supabase
 router.get('/callback', async (req, res) => {
-  const { code, state } = req.query
+  const { code, desktop } = req.query
   
   if (!code) {
     return res.status(400).send('<h1>Authentication failed</h1><p>No authorization code received.</p>')
@@ -33,10 +33,10 @@ router.get('/callback', async (req, res) => {
     // Sync user data with our database
     await syncUserFromDiscord(user)
 
-    // Check if this is a desktop app auth (has state parameter)
-    if (state) {
+    // Check if this is a desktop app auth (has desktop parameter)
+    if (desktop) {
       // Store session temporarily for desktop app to poll
-      pendingDesktopAuth.set(state, {
+      pendingDesktopAuth.set(desktop, {
         access_token: session.access_token,
         refresh_token: session.refresh_token,
         expires_at: session.expires_at,
@@ -49,7 +49,7 @@ router.get('/callback', async (req, res) => {
       })
 
       // Auto-cleanup after 5 minutes
-      setTimeout(() => pendingDesktopAuth.delete(state), 5 * 60 * 1000)
+      setTimeout(() => pendingDesktopAuth.delete(desktop), 5 * 60 * 1000)
 
       // Return HTML page for desktop user
       return res.send(`

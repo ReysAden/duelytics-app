@@ -30,9 +30,13 @@ function App() {
       const isDesktopApp = window.location.protocol === 'file:'
       
       if (isDesktopApp) {
-        // Desktop app OAuth flow
-        const state = Math.random().toString(36).substring(2, 15)
-        const redirectTo = `https://duelytics-app-production.up.railway.app/auth/callback?state=${state}`
+        // Desktop app OAuth flow - generate unique session ID
+        const sessionId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
+        
+        // Store session ID in localStorage so we can identify this login attempt
+        localStorage.setItem('pending_desktop_auth', sessionId)
+        
+        const redirectTo = `https://duelytics-app-production.up.railway.app/auth/callback?desktop=${sessionId}`
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'discord',
@@ -52,11 +56,12 @@ function App() {
           attempts++
           
           try {
-            const response = await fetch(`https://duelytics-app-production.up.railway.app/auth/desktop-session/${state}`)
+            const response = await fetch(`https://duelytics-app-production.up.railway.app/auth/desktop-session/${sessionId}`)
             
             if (response.ok) {
               const sessionData = await response.json()
               clearInterval(pollInterval)
+              localStorage.removeItem('pending_desktop_auth')
               
               // Set the session in Supabase
               await supabase.auth.setSession({
@@ -68,18 +73,20 @@ function App() {
               toast.success('Login successful!')
             } else if (attempts >= maxAttempts) {
               clearInterval(pollInterval)
+              localStorage.removeItem('pending_desktop_auth')
               setLoginLoading(false)
               toast.error('Login timeout. Please try again.')
             }
           } catch (err) {
             if (attempts >= maxAttempts) {
               clearInterval(pollInterval)
+              localStorage.removeItem('pending_desktop_auth')
               setLoginLoading(false)
               toast.error('Login failed. Please try again.')
             }
           }
         }, 2000)
-      } else {
+      }
         // Web app flow
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'discord',
