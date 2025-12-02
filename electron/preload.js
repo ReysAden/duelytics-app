@@ -39,4 +39,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installUpdate: () => ipcRenderer.invoke('app:install-update'),
   onDuelSubmitted: (callback) => ipcRenderer.on('duel:submitted', (event, sessionId) => callback(sessionId)),
   onLanguageChange: (callback) => ipcRenderer.on('language:changed', (event, language) => callback(language)),
+  
+  // Deep link handler for OAuth
+  onDeepLink: (callback) => {
+    const listener = (event, url) => callback(url)
+    ipcRenderer.on('deep-link', listener)
+    return () => ipcRenderer.removeListener('deep-link', listener)
+  },
+})
+
+// Expose a simple flag to detect Electron environment and shell utilities
+contextBridge.exposeInMainWorld('electron', {
+  isElectron: true,
+  openExternal: (url) => {
+    const { shell } = require('electron')
+    return shell.openExternal(url)
+  }
 })

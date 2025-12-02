@@ -6,6 +6,15 @@ const { autoUpdater } = require('electron-updater')
 // Auto-updater basic config
 autoUpdater.allowDowngrade = false
 
+// Set as default protocol client for deep linking
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('duelytics', process.execPath, [path.resolve(process.argv[1])])
+  }
+} else {
+  app.setAsDefaultProtocolClient('duelytics')
+}
+
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
@@ -15,6 +24,7 @@ if (!gotTheLock) {
 
 let mainWindow
 let overlayWindow
+let deeplinkUrl = null
 
 function createWindow() {
   // Create the browser window
@@ -55,6 +65,27 @@ function createWindow() {
     })
   })
 
+  // Intercept navigation to deep link URLs
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('duelytics://')) {
+      event.preventDefault()
+      handleDeepLink(url)
+    }
+  })
+  
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('duelytics://')) {
+      handleDeepLink(url)
+      return { action: 'deny' }
+    }
+    // Open external links in system browser
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      require('electron').shell.openExternal(url)
+      return { action: 'deny' }
+    }
+    return { action: 'allow' }
+  })
+  
   // Load the app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
@@ -63,26 +94,50 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
     
-    // Block DevTools keyboard shortcuts in production
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-      if (input.control && input.shift && input.key.toLowerCase() === 'i') {
-        event.preventDefault()
-      }
-      if (input.key.toLowerCase() === 'f12') {
-        event.preventDefault()
-      }
-    })
+    // Temporarily enable DevTools for debugging
+    mainWindow.webContents.openDevTools()
   }
 
   // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+    
+    // If we have a pending deep link, handle it now
+    if (deeplinkUrl) {
+      handleDeepLink(deeplinkUrl)
+      deeplinkUrl = null
+    }
   })
 
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+}
+
+// Handle deep link URLs on macOS
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  if (mainWindow) {
+    handleDeepLink(url)
+  } else {
+    deeplinkUrl = url
+  }
+})
+
+// Handle deep link URLs on Windows
+if (process.platform === 'win32') {
+  const url = process.argv.find(arg => arg.startsWith('duelytics://'))
+  if (url) {
+    deeplinkUrl = url
+  }
+}
+
+function handleDeepLink(url) {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  
+  // Extract the callback URL and send it to the renderer
+  mainWindow.webContents.send('deep-link', url)
 }
 
 // This method will be called when Electron has finished initialization
@@ -134,8 +189,14 @@ app.on('activate', () => {
   }
 })
 
-// Handle second instance
-app.on('second-instance', () => {
+// Handle second instance (for deep links when app is already running)
+app.on('second-instance', (event, commandLine) => {
+  // Find the deep link URL in command line args
+  const url = commandLine.find(arg => arg.startsWith('duelytics://'))
+  if (url) {
+    handleDeepLink(url)
+  }
+  
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()

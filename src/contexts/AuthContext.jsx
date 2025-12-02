@@ -124,6 +124,40 @@ export function AuthProvider({ children }) {
     }
     
     handleAuthCallback()
+    
+    // Handle deep link OAuth callback (for Electron)
+    const handleDeepLink = async (url) => {
+      console.log('Received deep link:', url)
+      // Extract the full callback URL from the deep link
+      // Format: duelytics://auth/callback?code=...&...  
+      const callbackUrl = url.replace('duelytics://auth/callback', 'https://temp.com')
+      const urlObj = new URL(callbackUrl)
+      
+      // Check if we have OAuth params
+      if (urlObj.searchParams.get('code') || urlObj.searchParams.get('access_token')) {
+        try {
+          // Exchange the code for a session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(urlObj.searchParams.get('code'))
+          
+          if (error) throw error
+          
+          if (data.session) {
+            setUser(data.session.user)
+            await syncUserRoles(data.session)
+          }
+        } catch (err) {
+          console.error('Deep link auth error:', err)
+        }
+      }
+    }
+    
+    // Listen for deep links from Electron
+    if (window.electron && window.electronAPI?.onDeepLink) {
+      const removeListener = window.electronAPI.onDeepLink(handleDeepLink)
+      return () => {
+        removeListener()
+      }
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

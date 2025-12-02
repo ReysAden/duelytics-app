@@ -5,7 +5,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && electron-builder",
+    "build": "vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"",
@@ -43,17 +43,28 @@
   "build": {
     "appId": "com.duelytics.app",
     "productName": "Duelytics",
+    "electronDist": "node_modules/electron/dist",
+    "electronVersion": "38.3.0",
+    "protocols": {
+      "name": "duelytics",
+      "schemes": ["duelytics"]
+    },
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*",
-      "node_modules/**/*"
+      "electron/**/*",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      "assets/**"
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "sign": null,
+      "verifyUpdateCodeSignature": false
     },
     "publish": {
       "provider": "github",
