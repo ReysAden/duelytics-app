@@ -75,6 +75,9 @@ function App() {
               
               setLoginLoading(false)
               toast.success('Login successful!')
+              
+              // Force a page reload to trigger AuthContext refresh
+              window.location.reload()
             } else if (attempts >= maxAttempts) {
               clearInterval(pollInterval)
               localStorage.removeItem('pending_desktop_auth')
