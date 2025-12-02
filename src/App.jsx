@@ -86,7 +86,7 @@ function App() {
             }
           }
         }, 2000)
-      }
+      } else {
         // Web app flow
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'discord',
