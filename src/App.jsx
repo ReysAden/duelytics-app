@@ -36,7 +36,7 @@ function App() {
         // Store session ID in localStorage so we can identify this login attempt
         localStorage.setItem('pending_desktop_auth', sessionId)
         
-        const redirectTo = `https://duelytics-app-production.up.railway.app/auth/callback?desktop=${sessionId}`
+        const redirectTo = `https://duelytics-app-production.up.railway.app/api/auth/callback?desktop=${sessionId}`
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'discord',
@@ -56,18 +56,22 @@ function App() {
           attempts++
           
           try {
-            const response = await fetch(`https://duelytics-app-production.up.railway.app/auth/desktop-session/${sessionId}`)
+            const response = await fetch(`https://duelytics-app-production.up.railway.app/api/auth/desktop-session/${sessionId}`)
             
             if (response.ok) {
-              const sessionData = await response.json()
+              const callbackData = await response.json()
               clearInterval(pollInterval)
               localStorage.removeItem('pending_desktop_auth')
               
-              // Set the session in Supabase
-              await supabase.auth.setSession({
-                access_token: sessionData.access_token,
-                refresh_token: sessionData.refresh_token
-              })
+              // Exchange the code for a session using Supabase (it has the code_verifier)
+              const { data, error } = await supabase.auth.exchangeCodeForSession(callbackData.code)
+              
+              if (error) {
+                console.error('Code exchange error:', error)
+                setLoginLoading(false)
+                toast.error('Login failed: ' + error.message)
+                return
+              }
               
               setLoginLoading(false)
               toast.success('Login successful!')

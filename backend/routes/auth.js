@@ -24,28 +24,14 @@ router.get('/callback', async (req, res) => {
   }
 
   try {
-    // Exchange code for session using Supabase
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error || !data.session) throw error
-
-    const { session, user } = data
-
-    // Sync user data with our database
-    await syncUserFromDiscord(user)
-
     // Check if this is a desktop app auth (has desktop parameter)
     if (desktop) {
-      // Store session temporarily for desktop app to poll
+      // Store the full callback URL for desktop app to handle code exchange
+      // (it has the code_verifier needed for PKCE)
       pendingDesktopAuth.set(desktop, {
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        expires_at: session.expires_at,
-        user: {
-          id: user.user_metadata?.provider_id,
-          username: user.user_metadata?.full_name,
-          avatar: user.user_metadata?.avatar_url,
-          email: user.email
-        }
+        callbackUrl: req.originalUrl,
+        code: code,
+        timestamp: Date.now()
       })
 
       // Auto-cleanup after 5 minutes
@@ -124,8 +110,8 @@ router.get('/callback', async (req, res) => {
       `)
     }
 
-    // Web app flow - redirect to app with session
-    res.redirect(`/?access_token=${session.access_token}&refresh_token=${session.refresh_token}`)
+    // Web app flow - Supabase will handle the redirect
+    res.redirect(`/?code=${code}`)
   } catch (error) {
     console.error('OAuth callback error:', error)
     res.status(500).send('<h1>Authentication failed</h1><p>Please try again.</p>')
