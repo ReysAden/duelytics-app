@@ -65,11 +65,20 @@ function createWindow() {
     })
   })
 
-  // Intercept navigation to deep link URLs
+  // Intercept navigation to prevent OAuth from loading in app
   mainWindow.webContents.on('will-navigate', (event, url) => {
+    // Handle deep links
     if (url.startsWith('duelytics://')) {
       event.preventDefault()
       handleDeepLink(url)
+      return
+    }
+    
+    // Open OAuth URLs in external browser
+    if (url.includes('supabase.co/auth') || url.includes('discord.com/oauth2')) {
+      event.preventDefault()
+      require('electron').shell.openExternal(url)
+      return
     }
   })
   
