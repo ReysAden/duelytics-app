@@ -10,7 +10,8 @@
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"",
     "dist": "npm run build && electron-builder --publish=never",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "release": "electron-builder --publish always"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
@@ -47,7 +48,9 @@
     "electronVersion": "38.3.0",
     "protocols": {
       "name": "duelytics",
-      "schemes": ["duelytics"]
+      "schemes": [
+        "duelytics"
+      ]
     },
     "directories": {
       "output": "release"
@@ -64,7 +67,8 @@
       "target": "nsis",
       "icon": "assets/icon.ico",
       "sign": null,
-      "verifyUpdateCodeSignature": false
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     },
     "publish": {
       "provider": "github",
