@@ -1,9 +1,14 @@
+/* ============================
+   MATCHUP HEADER + NAVIGATION
+   ============================ */
 .matchup-header {
-  padding: 16px 20px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0;
+  background: rgba(10, 10, 20, 0.7);
 }
 
 .matchup-nav {
@@ -36,7 +41,10 @@
   border: 1px solid rgb(99, 102, 241);
 }
 
-.matchup-matrix-container {
+/* ============================
+   MATRIX VIEW
+   ============================ */
+.matrix-container {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -50,6 +58,113 @@
   border-radius: 8px;
   background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(12px);
+  margin-top: 0;
+}
+
+.sticky-header {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(10, 10, 20, 0.95);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  margin: 0;
+  padding: 0;
+}
+
+.matrix-grid {
+  display: grid;
+  width: max-content;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.corner-cell {
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  left: 0;
+  z-index: 11;
+}
+
+.header-cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.top-header {
+  background: rgba(0, 0, 0, 0.9);
+  transition: background-color 0.15s ease;
+}
+
+.top-header.highlighted {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.left-header {
+  background: rgba(0, 0, 0, 0.8);
+  position: sticky;
+  left: 0;
+  z-index: 9;
+  transition: background-color 0.15s ease;
+}
+
+.left-header.highlighted {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.deck-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.matchup-cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.15s ease;
+  cursor: help;
+}
+
+.matchup-cell.highlighted {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.matchup-cell.active {
+  border: 2px solid rgba(99, 102, 241, 0.9);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
+
+.winrate {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1px;
+}
+
+.record {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-matchup {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .matrix-wrapper::-webkit-scrollbar {
@@ -71,107 +186,17 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-
-.loading,
+.matchups-loading,
 .no-data {
   color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
-  padding: 40px;
+  padding: 20px;
   text-align: center;
 }
 
-.matrix-table {
-  border-collapse: collapse;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  table-layout: fixed;
-  width: auto;
-}
-
-.corner-cell {
-  background: rgba(0, 0, 0, 0.9);
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 3;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-cell {
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  padding: 3px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-row {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-}
-
-.header-col {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.deck-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-}
-
-.matchup-cell {
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  text-align: center;
-  vertical-align: middle;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  cursor: help;
-  transition: all 0.15s ease;
-}
-
-.matchup-cell:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-.winrate {
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 1px;
-}
-
-.record {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.no-matchup {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
-}
-
+/* ============================
+   MOST FACED VIEW (CONTAINER)
+   ============================ */
 .most-faced-layout {
   display: flex;
   gap: 20px;
@@ -185,12 +210,18 @@
   border-radius: 12px;
 }
 
+/* ============================
+   SVG PIE CHART
+   ============================ */
 .pie-chart {
   width: 280px;
   height: 280px;
   flex-shrink: 0;
 }
 
+/* ============================
+   LEGEND FOR MOST FACED
+   ============================ */
 .legend-container {
   flex: 1;
   display: flex;

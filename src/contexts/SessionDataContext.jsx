@@ -93,6 +93,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       if (statsData.stats) setUserStats(statsData.stats);
       if (decksData.decks) setDecks(decksData.decks);
       if (leaderboardData.leaderboard) setLeaderboard(leaderboardData.leaderboard);
+      // Store matchups (matrix component will derive faced decks from matchups)
       if (matchupsData.matchups) setMatchups(matchupsData.matchups);
       if (duelsData) setDuels(Array.isArray(duelsData) ? duelsData : []);
       if (deckWinratesData.decks) setDeckWinrates(deckWinratesData.decks);
@@ -134,11 +135,15 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/stats`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/stats?_=${Date.now()}`, {
+        headers: { 
+          'Authorization': `Bearer ${session.access_token}`,
+          'Cache-Control': 'no-cache'
+        }
       });
       const data = await response.json();
       if (data.stats) {
+        console.log('✅ Stats updated:', data.stats);
         setUserStats(data.stats);
       }
     } catch (err) {
@@ -152,11 +157,15 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/duels`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/duels?_=${Date.now()}`, {
+        headers: { 
+          'Authorization': `Bearer ${session.access_token}`,
+          'Cache-Control': 'no-cache'
+        }
       });
       const data = await response.json();
       if (data) {
+        console.log('✅ Duels updated, count:', Array.isArray(data) ? data.length : 0);
         setDuels(Array.isArray(data) ? data : []);
       }
     } catch (err) {
@@ -180,9 +189,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         });
         const data = await response.json();
-        if (data.matchups) {
-          setMatchups(data.matchups);
-        }
+        if (data.matchups) setMatchups(data.matchups);
         lastRefetchTimeRef.current = Date.now();
       } catch (err) {
         console.error('Failed to refetch matchups:', err);
@@ -274,6 +281,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const data = await response.json();
       if (data.matchups) {
         setMatchups(data.matchups);
+        if (data.decks) setDecks(data.decks); // Update faced decks list
       }
     } catch (err) {
       console.error('Failed to fetch matchups:', err);

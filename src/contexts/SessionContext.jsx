@@ -70,7 +70,7 @@ export function SessionProvider({ children }) {
   useEffect(() => {
     fetchData();
 
-    // Setup single realtime subscription (INSERT/UPDATE/DELETE)
+    // Setup session realtime subscription (INSERT/UPDATE/DELETE)
     subscriptionRef.current = db.subscribeToSessions((changed) => {
       if (!changed || !changed.id) return;
       const status = changed.status;
@@ -94,12 +94,35 @@ export function SessionProvider({ children }) {
       }
     });
 
+    // Subscribe to session_participants to refresh counts when someone joins
+    const participantsChannel = supabase
+      .channel('participants-changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'session_participants' },
+        () => {
+          // Refetch participant counts when someone joins a session
+          if (sessions.length > 0) {
+            fetchParticipantCounts(sessions);
+          }
+        }
+      )
+      .subscribe();
+
+    // Auto-refresh participant counts every hour
+    const intervalId = setInterval(() => {
+      if (sessions.length > 0) {
+        fetchParticipantCounts(sessions);
+      }
+    }, 60 * 60 * 1000); // 1 hour
+
     return () => {
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current);
       }
+      supabase.removeChannel(participantsChannel);
+      clearInterval(intervalId);
     };
-  }, []);
+  }, [sessions]);
 
   // Expose refresh function for manual refreshes
   const refreshSessions = () => {

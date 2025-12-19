@@ -31,6 +31,15 @@ function DuelRecordsContent() {
   } = useSessionData();
   const [activeTab, setActiveTab] = useState('submit');
   const [activeSubTab, setActiveSubTab] = useState('Overview');
+  
+  // Set default subtab when switching tabs
+  useEffect(() => {
+    if (activeTab === 'matchup-matrix' && activeSubTab === 'Overview') {
+      setActiveSubTab('Matrix');
+    } else if (activeTab === 'personal-stats' && (activeSubTab === 'Matrix' || activeSubTab === 'Most Faced')) {
+      setActiveSubTab('Overview');
+    }
+  }, [activeTab, activeSubTab]);
   const [dateFilter, setDateFilter] = useState('all');
   const [availableDates, setAvailableDates] = useState([]);
   const [overlayOpen, setOverlayOpen] = useState(false);
@@ -186,13 +195,23 @@ function DuelRecordsContent() {
               </select>
             </div>
           )}
+          {activeTab === 'matchup-matrix' && (
+            <div style={{ display: 'flex', gap: '8px', background: 'rgba(10, 10, 20, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '8px 12px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)' }}>
+              <button onClick={() => setActiveSubTab('Matrix')} style={{ padding: '6px 10px', background: activeSubTab === 'Matrix' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Matrix' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Matrix' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>Matrix</button>
+              <button onClick={() => setActiveSubTab('Most Faced')} style={{ padding: '6px 10px', background: activeSubTab === 'Most Faced' ? 'rgba(99, 102, 241, 0.3)' : 'transparent', border: activeSubTab === 'Most Faced' ? '1px solid rgb(99, 102, 241)' : 'none', color: activeSubTab === 'Most Faced' ? '#ffffff' : 'rgba(255, 255, 255, 0.6)', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>Most Faced</button>
+            </div>
+          )}
         </div>
         <div style={{ paddingLeft: activeTab === 'matchup-matrix' ? '16px' : '32px', paddingRight: activeTab === 'matchup-matrix' ? '16px' : '32px', paddingBottom: activeTab === 'matchup-matrix' ? '16px' : '32px', marginLeft: '0' }}>
 {activeTab === 'submit' && <Submit />}
           {activeTab === 'personal-stats' && <PersonalStats sessionData={sessionData} activeSubTab={activeSubTab} onSubTabChange={setActiveSubTab} dateFilter={dateFilter} setDateFilter={setDateFilter} availableDates={availableDates} setAvailableDates={setAvailableDates} />}
           {activeTab === 'deck-winrate' && <DeckWinrates sessionId={sessionId} />}
-          {activeTab === 'matchup-matrix' && <MatchupMatrix />}
-          {activeTab === 'history' && <DuelHistory sessionId={sessionId} onDuelDeleted={null} />}
+          {activeTab === 'matchup-matrix' && <MatchupMatrix viewMode={activeSubTab} />}
+          {activeTab === 'history' && <DuelHistory sessionId={sessionId} onDuelDeleted={() => {
+            // Refresh user stats and duels list after deletion
+            fetchUserStatsImmediate();
+            fetchDuelsImmediate();
+          }} />}
           {activeTab === 'leaderboard' && <Leaderboard />}
         </div>
       </main>

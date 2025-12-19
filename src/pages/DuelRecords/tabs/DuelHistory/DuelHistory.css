@@ -116,6 +116,39 @@
   background: #dc2626;
 }
 
+.delete-btn.cooldown {
+  background: rgba(239, 68, 68, 0.4);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.delete-btn.cooldown:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.delete-confirmation {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.delete-btn.confirm {
+  background: #f59e0b;
+}
+
+.delete-btn.confirm:hover {
+  background: #d97706;
+}
+
+.delete-btn.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.delete-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .no-duels {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);

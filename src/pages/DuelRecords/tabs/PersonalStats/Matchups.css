@@ -1,39 +1,41 @@
 /* ============================
-   MATCHUP HEADER + NAVIGATION
+   FLOATING ISLAND NAVIGATION
    ============================ */
-.matchup-header {
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.matchups-nav-island {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.matchup-nav {
-  display: flex;
-  gap: 6px;
-}
-
-.matchup-btn {
-  padding: 5px 10px;
+  gap: 8px;
+  justify-content: center;
   background: rgba(10, 10, 20, 0.7);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nav-tab {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 4px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.matchup-btn:hover {
+.nav-tab:hover {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.8);
 }
 
-.matchup-btn.active {
+.nav-tab.active {
   background: rgba(99, 102, 241, 0.3);
   color: #ffffff;
   border: 1px solid rgb(99, 102, 241);
@@ -49,6 +51,113 @@
   border-radius: 8px;
   background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(12px);
+  margin-top: 0;
+}
+
+.sticky-header {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(10, 10, 20, 0.95);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  margin: 0;
+  padding: 0;
+}
+
+.matrix-grid {
+  display: grid;
+  width: max-content;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.corner-cell {
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  left: 0;
+  z-index: 11;
+}
+
+.header-cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.top-header {
+  background: rgba(0, 0, 0, 0.9);
+  transition: background-color 0.15s ease;
+}
+
+.top-header.highlighted {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.left-header {
+  background: rgba(0, 0, 0, 0.8);
+  position: sticky;
+  left: 0;
+  z-index: 9;
+  transition: background-color 0.15s ease;
+}
+
+.left-header.highlighted {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.deck-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.matchup-cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.15s ease;
+  cursor: help;
+}
+
+.matchup-cell.highlighted {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.matchup-cell.active {
+  border: 2px solid rgba(99, 102, 241, 0.9);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
+
+.winrate {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1px;
+}
+
+.record {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-matchup {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .matrix-wrapper::-webkit-scrollbar {
@@ -79,215 +188,125 @@
 }
 
 /* ============================
-   MOST FACED VIEW (CONTAINER)
+   MOST FACED VIEW
    ============================ */
-.most-faced-layout {
+.most-faced-container {
   display: flex;
-  gap: 20px;
-  flex: 1;
-  align-items: center;
-  overflow: hidden;
-  padding: 10px;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+.pie-chart-island {
   background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  width: fit-content;
+  position: relative;
 }
 
-/* ============================
-   SVG PIE CHART
-   ============================ */
-.pie-chart {
-  width: 280px;
-  height: 280px;
-  flex-shrink: 0;
-}
-
-/* ============================
-   LEGEND FOR MOST FACED
-   ============================ */
-.legend-container {
-  flex: 1;
+.pie-chart-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  min-width: 0;
 }
 
-.legend-filters {
-  display: flex;
-  gap: 6px;
-}
-
-.filter-btn {
-  flex: 1;
-  padding: 4px 8px;
+.control-btn {
+  padding: 6px 16px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  border-radius: 6px;
   color: rgba(255, 255, 255, 0.7);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.filter-btn:hover {
+.control-btn:hover {
   background: rgba(0, 0, 0, 0.6);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.filter-btn.active {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 1);
+.control-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+  border: 1px solid rgb(99, 102, 241);
 }
 
-.legend-header {
+.pie-chart {
+  width: 1000px;
+  height: 1000px;
+  display: block;
+}
+
+.deck-details-island {
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  flex: 1;
+  max-width: 400px;
+}
+
+.deck-details-header {
   display: grid;
-  grid-template-columns: 1fr 50px 50px;
-  gap: 10px;
-  padding: 6px 10px;
-  font-size: 10px;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 11px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
 }
 
-.legend-header span:nth-child(2),
-.legend-header span:nth-child(3) {
+.deck-details-header span:nth-child(2),
+.deck-details-header span:nth-child(3) {
   text-align: right;
 }
 
-.legend-list {
+.deck-details-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  max-height: 450px;
   overflow-y: auto;
-  max-height: 260px;
 }
 
-.legend-item {
+.deck-details-item {
   display: grid;
-  grid-template-columns: 1fr 50px 50px;
-  gap: 10px;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 12px;
   align-items: center;
-  padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 400;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.9);
+  transition: background 0.15s ease;
 }
 
-.legend-item:hover {
-  background: rgba(0, 0, 0, 0.6);
+.deck-details-item:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .deck-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
 }
 
-.games,
-.percentage {
+.deck-games,
+.deck-percentage {
   text-align: right;
-  font-weight: 400;
-}
-
-/* ============================
-   MATRIX TABLE CELLS
-   ============================ */
-.matrix-table {
-  border-collapse: collapse;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  table-layout: fixed;
-  width: auto;
-}
-
-.corner-cell {
-  background: rgba(0, 0, 0, 0.9);
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 3;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-cell {
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  padding: 3px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-row {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-}
-
-.header-col {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.deck-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-}
-
-.matchup-cell {
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
-  text-align: center;
-  vertical-align: middle;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  cursor: help;
-  transition: all 0.15s ease;
-}
-
-.matchup-cell:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-.winrate {
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 1px;
-}
-
-.record {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.no-matchup {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
+  font-weight: 500;
 }

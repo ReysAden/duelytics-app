@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
@@ -8,6 +8,8 @@ import { API_URL } from '../../../../config/api';
 
 export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = false }) {
   const { t } = useTranslation('duelRecords');
+  const [cooldownUntil, setCooldownUntil] = useState(null);
+  const [confirmingDuelId, setConfirmingDuelId] = useState(null);
   
   // Try archive context first, fallback to active session context
   let contextData;
@@ -29,11 +31,42 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
       });
 
       if (!response.ok) throw new Error('Failed to delete duel');
+      
+      // Start 15-second cooldown
+      const cooldownEnd = Date.now() + 15000;
+      setCooldownUntil(cooldownEnd);
+      setConfirmingDuelId(null);
+      
+      // Clear cooldown after 15 seconds
+      setTimeout(() => {
+        setCooldownUntil(null);
+      }, 15000);
+      
       if (onDuelDeleted) onDuelDeleted();
     } catch (err) {
       console.error('Failed to delete duel:', err.message);
+      setConfirmingDuelId(null);
     }
   }, [onDuelDeleted]);
+
+  const handleDeleteClick = useCallback((duelId) => {
+    // Check if in cooldown
+    if (cooldownUntil && Date.now() < cooldownUntil) {
+      return;
+    }
+
+    // If already confirming this duel, proceed with deletion
+    if (confirmingDuelId === duelId) {
+      handleDelete(duelId);
+    } else {
+      // Show confirmation
+      setConfirmingDuelId(duelId);
+    }
+  }, [cooldownUntil, confirmingDuelId, handleDelete]);
+
+  const handleCancelDelete = useCallback(() => {
+    setConfirmingDuelId(null);
+  }, []);
 
   // Memoize date formatting function
   const formatDate = useCallback((dateString) => {
@@ -96,12 +129,32 @@ export default function DuelHistory({ sessionId, onDuelDeleted, isArchived = fal
                   <td>{duel.rating_after || '—'}</td>
                   {!isArchived && (
                     <td>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDelete(duel.id)}
-                      >
-                        {t('common:common.delete')}
-                      </button>
+                      {confirmingDuelId === duel.id ? (
+                        <div className="delete-confirmation">
+                          <button
+                            className="delete-btn confirm"
+                            onClick={() => handleDeleteClick(duel.id)}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            className="delete-btn cancel"
+                            onClick={handleCancelDelete}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className={`delete-btn ${cooldownUntil && Date.now() < cooldownUntil ? 'cooldown' : ''}`}
+                          onClick={() => handleDeleteClick(duel.id)}
+                          disabled={cooldownUntil && Date.now() < cooldownUntil}
+                        >
+                          {cooldownUntil && Date.now() < cooldownUntil 
+                            ? `${Math.ceil((cooldownUntil - Date.now()) / 1000)}s`
+                            : t('common:common.delete')}
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>

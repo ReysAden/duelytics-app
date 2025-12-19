@@ -23,7 +23,7 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
         user_id,
         current_points,
         users!player_session_stats_user_id_fkey (username, hide_from_leaderboard),
-        ladder_tiers (tier_name)
+        ladder_tiers (tier_name, sort_order)
       `)
       .eq('session_id', sessionId)
       .order('current_points', { ascending: false })
@@ -93,6 +93,7 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
         username: player.users.username,
         points: player.current_points,
         tier_name: player.ladder_tiers?.tier_name || null,
+        tier_sort_order: player.ladder_tiers?.sort_order || 999, // 999 for unranked (lowest)
         total_games: totalGames,
         top_deck: topDeck,
         top_deck_image: topDeckImage,
@@ -106,9 +107,11 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
     // Sort by points (or tier for ladder mode)
     const sortedLeaderboard = session?.game_mode === 'ladder'
       ? leaderboardData.sort((a, b) => {
-          // Sort by tier first, then by games if same tier
-          if (a.tier_name === b.tier_name) return b.total_games - a.total_games
-          return (b.tier_name || '').localeCompare(a.tier_name || '')
+          // Sort by tier rank (higher sort_order = higher rank), then by total games
+          if (a.tier_sort_order !== b.tier_sort_order) {
+            return b.tier_sort_order - a.tier_sort_order
+          }
+          return b.total_games - a.total_games
         })
       : leaderboardData.sort((a, b) => b.points - a.points)
 

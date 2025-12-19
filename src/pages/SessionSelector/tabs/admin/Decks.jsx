@@ -15,6 +15,9 @@ function Decks() {
   const [success, setSuccess] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deckToEdit, setDeckToEdit] = useState(null);
+  const [editDeckName, setEditDeckName] = useState('');
 
   useEffect(() => {
     fetchDecks();
@@ -31,6 +34,48 @@ function Decks() {
     } catch (err) {
       setError(t('ui.failedLoadDecks'));
     }
+  };
+
+  const handleEditDeck = (deck) => {
+    setDeckToEdit(deck);
+    setEditDeckName(deck.name);
+    setShowEditModal(true);
+  };
+
+  const confirmEditDeck = async () => {
+    if (!deckToEdit || !editDeckName.trim()) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`${API_URL}/decks/${deckToEdit.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: editDeckName })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || t('ui.failedUpdateDeck'));
+      }
+
+      setShowEditModal(false);
+      setDeckToEdit(null);
+      setEditDeckName('');
+      fetchDecks();
+    } catch (err) {
+      setError(err.message || t('ui.failedUpdateDeck'));
+    }
+  };
+
+  const cancelEditDeck = () => {
+    setShowEditModal(false);
+    setDeckToEdit(null);
+    setEditDeckName('');
   };
 
   const handleDeleteDeck = (deckId) => {
@@ -188,12 +233,54 @@ function Decks() {
               <DeckCard 
                 key={deck.id} 
                 deck={deck} 
+                onEdit={handleEditDeck}
                 onDelete={handleDeleteDeck}
               />
             ))}
           </div>
         )}
       </div>
+
+      {showEditModal && (
+        <div className="modal-overlay" onClick={cancelEditDeck}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Deck Name</h3>
+            <input
+              type="text"
+              value={editDeckName}
+              onChange={(e) => setEditDeckName(e.target.value)}
+              placeholder="Deck name"
+              autoFocus
+              style={{
+                backgroundColor: '#374151',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '14px',
+                width: '100%',
+                marginBottom: '16px'
+              }}
+            />
+            
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn" 
+                onClick={cancelEditDeck}
+              >
+                {t('ui.cancel')}
+              </button>
+              <button 
+                className="submit-btn" 
+                onClick={confirmEditDeck}
+                disabled={!editDeckName.trim()}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDeleteDeck}>

@@ -23,6 +23,7 @@ function Submit({ onDuelSubmitted }) {
   } = useSessionData();
   const [sessionData, setSessionData] = useState(null);
   const [decks, setDecks] = useState([]);
+  const [deckUsage, setDeckUsage] = useState({ player: {}, opponent: {} });
   const [yourDeckSearch, setYourDeckSearch] = useState('');
   const [oppDeckSearch, setOppDeckSearch] = useState('');
   const [showYourDeckDropdown, setShowYourDeckDropdown] = useState(false);
@@ -39,17 +40,18 @@ function Submit({ onDuelSubmitted }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredYourDecks = decks.filter(deck => 
-    deck.name.toLowerCase().includes(yourDeckSearch.toLowerCase())
-  );
+  const filteredYourDecks = decks
+    .filter(deck => deck.name.toLowerCase().includes(yourDeckSearch.toLowerCase()))
+    .sort((a, b) => (deckUsage.player[b.id] || 0) - (deckUsage.player[a.id] || 0));
 
-  const filteredOppDecks = decks.filter(deck => 
-    deck.name.toLowerCase().includes(oppDeckSearch.toLowerCase())
-  );
+  const filteredOppDecks = decks
+    .filter(deck => deck.name.toLowerCase().includes(oppDeckSearch.toLowerCase()))
+    .sort((a, b) => (deckUsage.opponent[b.id] || 0) - (deckUsage.opponent[a.id] || 0));
 
   useEffect(() => {
     fetchSessionData();
     fetchDecks();
+    fetchDeckUsage();
   }, [sessionId]);
 
   // Close overlay when leaving Submit page
@@ -113,6 +115,38 @@ function Submit({ onDuelSubmitted }) {
       }
     } catch (err) {
       console.error('Failed to load decks:', err);
+    }
+  };
+
+  const fetchDeckUsage = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/duels`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const duels = await response.json();
+      
+      const playerUsage = {};
+      const opponentUsage = {};
+      
+      if (Array.isArray(duels)) {
+        duels.forEach(duel => {
+          // Count player deck usage
+          if (duel.player_deck_id) {
+            playerUsage[duel.player_deck_id] = (playerUsage[duel.player_deck_id] || 0) + 1;
+          }
+          // Count opponent deck usage
+          if (duel.opponent_deck_id) {
+            opponentUsage[duel.opponent_deck_id] = (opponentUsage[duel.opponent_deck_id] || 0) + 1;
+          }
+        });
+      }
+      
+      setDeckUsage({ player: playerUsage, opponent: opponentUsage });
+    } catch (err) {
+      console.error('Failed to load deck usage:', err);
     }
   };
 
@@ -242,6 +276,12 @@ function Submit({ onDuelSubmitted }) {
 
       if (response.ok) {
         toast.success('Last duel deleted');
+        
+        // Refresh stats and data after deletion
+        invalidateCache(['userStats', 'duels', 'leaderboard', 'deckWinrates', 'personalOverview', 'personalDeckAnalysis', 'personalMatchups', 'matchups']);
+        fetchUserStatsImmediate();
+        fetchDuelsImmediate();
+        
         if (onDuelSubmitted) onDuelSubmitted();
       } else {
         const data = await response.json();
@@ -366,7 +406,7 @@ function Submit({ onDuelSubmitted }) {
                       setShowCoinFlipDropdown(false);
                     }}
                   >
-                    <img src="/heads-coin.png" alt="Heads" style={{ width: '20px', height: '20px' }} />
+                    <img src="./heads-coin.png" alt="Heads" style={{ width: '20px', height: '20px' }} />
                     {t('submit.won')}
                   </div>
                   <div
@@ -377,7 +417,7 @@ function Submit({ onDuelSubmitted }) {
                       setShowCoinFlipDropdown(false);
                     }}
                   >
-                    <img src="/tails-coin.png" alt="Tails" style={{ width: '20px', height: '20px' }} />
+                    <img src="./tails-coin.png" alt="Tails" style={{ width: '20px', height: '20px' }} />
                     {t('submit.lost')}
                   </div>
                 </div>
@@ -413,7 +453,7 @@ function Submit({ onDuelSubmitted }) {
                       setShowTurnOrderDropdown(false);
                     }}
                   >
-                    <img src="/first.svg" alt="First" style={{ width: '20px', height: '20px' }} />
+                    <img src="./first.svg" alt="First" style={{ width: '20px', height: '20px' }} />
                     {t('submit.first')}
                   </div>
                   <div
@@ -424,7 +464,7 @@ function Submit({ onDuelSubmitted }) {
                       setShowTurnOrderDropdown(false);
                     }}
                   >
-                    <img src="/second.svg" alt="Second" style={{ width: '20px', height: '20px' }} />
+                    <img src="./second.svg" alt="Second" style={{ width: '20px', height: '20px' }} />
                     {t('submit.second')}
                   </div>
                 </div>

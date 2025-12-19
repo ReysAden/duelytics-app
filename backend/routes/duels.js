@@ -207,6 +207,8 @@ router.delete('/last', authenticate, duelDeleteLimiter, async (req, res) => {
       remainingDuels?.forEach(d => {
         currentPoints += parseFloat(d.points_change || 0)
       })
+      // Duelist Cup cannot go below 0
+      currentPoints = Math.max(0, currentPoints)
     } else if (session.game_mode === 'ladder') {
       remainingDuels?.forEach(d => {
         currentPoints += parseFloat(d.points_change || 0)
@@ -214,18 +216,33 @@ router.delete('/last', authenticate, duelDeleteLimiter, async (req, res) => {
     }
 
     // Update player stats
+    const updateData = {
+      total_games: totalGames,
+      total_wins: totalWins,
+      current_points: currentPoints,
+      updated_at: new Date().toISOString()
+    };
+    
+    // For ladder mode, also update current_net_wins
+    if (session.game_mode === 'ladder') {
+      updateData.current_net_wins = currentPoints;
+    }
+    
     const { error: updateError } = await supabaseAdmin
       .from('player_session_stats')
-      .update({
-        total_games: totalGames,
-        total_wins: totalWins,
-        current_points: currentPoints,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('session_id', lastDuel.session_id)
       .eq('user_id', lastDuel.user_id)
 
     if (updateError) throw updateError
+
+    // Recalculate tier for ladder mode
+    if (session.game_mode === 'ladder') {
+      await supabaseAdmin.rpc('check_tier_progression', {
+        p_session_id: lastDuel.session_id,
+        p_user_id: lastDuel.user_id
+      })
+    }
 
     res.json({ success: true, message: 'Last duel deleted and stats recalculated' })
   } catch (error) {
@@ -287,6 +304,8 @@ router.delete('/:duelId', authenticate, async (req, res) => {
       remainingDuels?.forEach(d => {
         currentPoints += parseFloat(d.points_change || 0)
       })
+      // Duelist Cup cannot go below 0
+      currentPoints = Math.max(0, currentPoints)
     } else if (session.game_mode === 'ladder') {
       remainingDuels?.forEach(d => {
         currentPoints += parseFloat(d.points_change || 0)
@@ -294,18 +313,33 @@ router.delete('/:duelId', authenticate, async (req, res) => {
     }
 
     // Update player stats
+    const updateData = {
+      total_games: totalGames,
+      total_wins: totalWins,
+      current_points: currentPoints,
+      updated_at: new Date().toISOString()
+    };
+    
+    // For ladder mode, also update current_net_wins
+    if (session.game_mode === 'ladder') {
+      updateData.current_net_wins = currentPoints;
+    }
+    
     const { error: updateError } = await supabaseAdmin
       .from('player_session_stats')
-      .update({
-        total_games: totalGames,
-        total_wins: totalWins,
-        current_points: currentPoints,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('session_id', duel.session_id)
       .eq('user_id', duel.user_id)
 
     if (updateError) throw updateError
+
+    // Recalculate tier for ladder mode
+    if (session.game_mode === 'ladder') {
+      await supabaseAdmin.rpc('check_tier_progression', {
+        p_session_id: duel.session_id,
+        p_user_id: duel.user_id
+      })
+    }
 
     res.json({ success: true, message: 'Duel deleted and stats recalculated' })
   } catch (error) {

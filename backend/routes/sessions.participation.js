@@ -99,37 +99,27 @@ router.get('/:sessionId/participants', authenticate, async (req, res) => {
   try {
     const sessionId = req.params.sessionId
 
-    // Get all users who have duels in this session
-    const { data: duels } = await supabaseAdmin
-      .from('duels')
-      .select('user_id')
+    // Get all users who joined this session
+    const { data: participants } = await supabaseAdmin
+      .from('session_participants')
+      .select(`
+        user_id,
+        users!session_participants_user_id_fkey (username)
+      `)
       .eq('session_id', sessionId)
 
-    if (!duels || duels.length === 0) {
-      return res.json({ participants: [] })
-    }
-
-    // Get unique user IDs
-    const uniqueUserIds = [...new Set(duels.map(d => d.user_id))]
-
-    // Fetch usernames for these user IDs
-    const { data: users } = await supabaseAdmin
-      .from('users')
-      .select('discord_id, username')
-      .in('discord_id', uniqueUserIds)
-
-    if (!users) {
+    if (!participants || participants.length === 0) {
       return res.json({ participants: [] })
     }
 
     // Format response
-    const participants = users.map(user => ({
-      user_id: user.discord_id,
-      username: user.username
+    const formattedParticipants = participants.map(p => ({
+      user_id: p.user_id,
+      username: p.users.username
     }))
     .sort((a, b) => a.username.localeCompare(b.username))
 
-    res.json({ participants })
+    res.json({ participants: formattedParticipants })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
