@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('electronAPI', {
   // App info
   getVersion: () => ipcRenderer.invoke('app:get-version'),
+  checkForUpdates: () => ipcRenderer.invoke('app:check-for-updates'),
   
   // Window controls
   minimize: () => ipcRenderer.invoke('window:minimize'),
@@ -20,6 +21,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     open: (params) => ipcRenderer.invoke('overlay:open', params),
     close: () => ipcRenderer.invoke('overlay:close'),
     resize: (size) => ipcRenderer.invoke('overlay:resize', size),
+  },
+  
+  // Auth
+  auth: {
+    getToken: () => ipcRenderer.invoke('auth:getToken'),
+    onTokenRequest: (callback) => ipcRenderer.on('auth:requestToken', callback),
+    sendToken: (token) => ipcRenderer.send('auth:tokenResponse', token),
   },
   
   // IPC communication

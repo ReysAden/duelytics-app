@@ -1,5 +1,5 @@
 import { supabase } from './lib/supabase'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
@@ -22,6 +22,16 @@ function App() {
   
   // Fetch and cache user's background preference on login
   useBackgroundPreference(user)
+  
+  // Handle auth token requests from overlay
+  useEffect(() => {
+    if (window.electronAPI?.auth?.onTokenRequest) {
+      window.electronAPI.auth.onTokenRequest(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        window.electronAPI.auth.sendToken(session?.access_token || null);
+      });
+    }
+  }, []);
 
   const handleDiscordLogin = async () => {
     setLoginLoading(true)

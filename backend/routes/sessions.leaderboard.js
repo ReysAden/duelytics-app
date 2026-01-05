@@ -107,10 +107,27 @@ router.get('/:sessionId/leaderboard', authenticate, async (req, res) => {
     // Sort by points (or tier for ladder mode)
     const sortedLeaderboard = session?.game_mode === 'ladder'
       ? leaderboardData.sort((a, b) => {
-          // Sort by tier rank (higher sort_order = higher rank), then by total games
+          // Sort by tier rank (higher sort_order = higher rank)
           if (a.tier_sort_order !== b.tier_sort_order) {
             return b.tier_sort_order - a.tier_sort_order
           }
+          
+          // If same tier, parse tier level (e.g., "Master 1" vs "Master 5")
+          // Lower number = higher rank (Master 1 > Master 5)
+          const getTierLevel = (tierName) => {
+            if (!tierName) return 999
+            const match = tierName.match(/(\d+)$/)
+            return match ? parseInt(match[1]) : 999
+          }
+          
+          const aLevel = getTierLevel(a.tier_name)
+          const bLevel = getTierLevel(b.tier_name)
+          
+          if (aLevel !== bLevel) {
+            return aLevel - bLevel // Lower number = higher rank
+          }
+          
+          // If same tier and level, sort by total games
           return b.total_games - a.total_games
         })
       : leaderboardData.sort((a, b) => b.points - a.points)
@@ -136,8 +153,8 @@ router.get('/:sessionId/duels', authenticate, async (req, res) => {
         went_first,
         points_change,
         created_at,
-        player_deck:decks!duels_player_deck_id_fkey(name),
-        opponent_deck:decks!duels_opponent_deck_id_fkey(name)
+        player_deck:decks!duels_player_deck_id_fkey(id, name),
+        opponent_deck:decks!duels_opponent_deck_id_fkey(id, name)
       `)
       .eq('session_id', sessionId)
       .eq('user_id', userId)
@@ -165,7 +182,9 @@ router.get('/:sessionId/duels', authenticate, async (req, res) => {
         result: duel.result,
         coin_flip_winner: duel.coin_flip_won ? 'player' : 'opponent',
         first_turn: duel.went_first ? 'player' : 'opponent',
+        player_deck_id: duel.player_deck.id,
         player_deck_name: duel.player_deck.name,
+        opponent_deck_id: duel.opponent_deck.id,
         opponent_deck_name: duel.opponent_deck.name,
         rating_after: currentRating,
         created_at: duel.created_at
@@ -183,16 +202,36 @@ router.get('/:sessionId/deck-winrates', authenticate, async (req, res) => {
   try {
     const sessionId = req.params.sessionId
 
-    // Get all duels in the session with deck info
-    const { data: duels } = await supabaseAdmin
-      .from('duels')
-      .select(`
-        result,
-        went_first,
-        player_deck_id,
-        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url)
-      `)
-      .eq('session_id', sessionId)
+    // Fetch all duels in batches to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) {
+        console.error('Deck Winrates Query Error:', error)
+        throw error
+      }
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
+    }
+    
+    console.log('Deck Winrates Query - Total duels fetched:', allDuels.length)
+    const duels = allDuels
 
     if (!duels || duels.length === 0) {
       return res.json({ decks: [] })
@@ -205,9 +244,9 @@ router.get('/:sessionId/deck-winrates', authenticate, async (req, res) => {
       const deckId = duel.player_deck_id
       if (!deckStatsMap.has(deckId)) {
         deckStatsMap.set(deckId, {
-          id: duel.player_deck.id,
-          name: duel.player_deck.name,
-          image_url: duel.player_deck.image_url,
+          id: duel.player_deck_id,
+          name: duel.player_deck_name,
+          image_url: duel.player_deck_image_url,
           totalGames: 0,
           totalWins: 0,
           firstGames: 0,

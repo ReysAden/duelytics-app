@@ -186,7 +186,7 @@ BEGIN
     p_session_id,
     p_user_id,
     CASE 
-      WHEN p_game_mode = 'duelist_cup' THEN 1000
+      WHEN p_game_mode = 'duelist_cup' THEN 0
       WHEN p_game_mode = 'rated' THEN COALESCE(p_starting_points, 1500)
       ELSE 0
     END,

@@ -203,11 +203,19 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/deck-winrates`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/deck-winrates?_=${Date.now()}`, {
+        headers: { 
+          'Authorization': `Bearer ${session.access_token}`,
+          'Cache-Control': 'no-cache'
+        }
       });
       const data = await response.json();
+      console.log('Deck Winrates API Response:', data);
       if (data.decks) {
+        console.log('Deck Winrates - Number of decks:', data.decks.length);
+        data.decks.forEach(deck => {
+          console.log(`  ${deck.name}: ${deck.totalGames} games`);
+        });
         setDeckWinrates(data.decks);
       }
     } catch (err) {

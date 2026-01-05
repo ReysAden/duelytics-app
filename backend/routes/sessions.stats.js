@@ -27,25 +27,55 @@ router.get('/:sessionId/overview', authenticate, async (req, res) => {
     const sessionId = req.params.sessionId
     const days = req.query.days
 
-    // Get all user's duels
-    let query = supabaseAdmin
-      .from('duels')
-      .select(`
-        *,
-        player_deck:decks!duels_player_deck_id_fkey(name),
-        opponent_deck:decks!duels_opponent_deck_id_fkey(name)
-      `)
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-
-    if (days && days !== 'all') {
-      // Filter by specific UTC date (YYYY-MM-DD)
-      const startOfDay = `${days}T00:00:00.000Z`
-      const endOfDay = `${days}T23:59:59.999Z`
-      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
     }
-
-    const { data: duels } = await query
+    
+    // Transform flat RPC response and filter by userId and optional date
+    let duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({
+        result: d.result,
+        went_first: d.went_first,
+        player_deck: {
+          name: d.player_deck_name
+        },
+        opponent_deck: {
+          name: d.opponent_deck_name
+        },
+        created_at: d.created_at
+      }))
+    
+    // Apply date filter if specified
+    if (days && days !== 'all') {
+      const startOfDay = new Date(`${days}T00:00:00.000Z`)
+      const endOfDay = new Date(`${days}T23:59:59.999Z`)
+      duels = duels.filter(d => {
+        const duelDate = new Date(d.created_at)
+        return duelDate >= startOfDay && duelDate <= endOfDay
+      })
+    }
 
     if (!duels || duels.length === 0) {
       return res.json({
@@ -135,23 +165,53 @@ router.get('/:sessionId/deck-analysis', authenticate, async (req, res) => {
     const sessionId = req.params.sessionId
     const days = req.query.days
 
-    let query = supabaseAdmin
-      .from('duels')
-      .select(`
-        *,
-        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url)
-      `)
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-
-    if (days && days !== 'all') {
-      // Filter by specific UTC date (YYYY-MM-DD)
-      const startOfDay = `${days}T00:00:00.000Z`
-      const endOfDay = `${days}T23:59:59.999Z`
-      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
     }
-
-    const { data: duels } = await query
+    
+    // Transform flat RPC response and filter by userId and optional date
+    let duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({
+        result: d.result,
+        player_deck: {
+          id: d.player_deck_id,
+          name: d.player_deck_name,
+          image_url: d.player_deck_image_url
+        },
+        created_at: d.created_at
+      }))
+    
+    // Apply date filter if specified
+    if (days && days !== 'all') {
+      const startOfDay = new Date(`${days}T00:00:00.000Z`)
+      const endOfDay = new Date(`${days}T23:59:59.999Z`)
+      duels = duels.filter(d => {
+        const duelDate = new Date(d.created_at)
+        return duelDate >= startOfDay && duelDate <= endOfDay
+      })
+    }
 
     if (!duels || duels.length === 0) {
       return res.json({ decks: [] })
@@ -197,12 +257,36 @@ router.get('/:sessionId/dates', authenticate, async (req, res) => {
     const userId = req.query.userId || req.user.discord_id // Support viewing other users
     const sessionId = req.params.sessionId
 
-    const { data: duels } = await supabaseAdmin
-      .from('duels')
-      .select('created_at')
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
+    }
+    
+    // Filter by userId and extract created_at
+    const duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({ created_at: d.created_at }))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
     if (!duels || duels.length === 0) {
       return res.json({ dates: [] })
@@ -229,21 +313,50 @@ router.get('/:sessionId/coin-flip', authenticate, async (req, res) => {
     const sessionId = req.params.sessionId
     const days = req.query.days
 
-    let query = supabaseAdmin
-      .from('duels')
-      .select('coin_flip_won, result, created_at')
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (days && days !== 'all') {
-      // Filter by specific UTC date (YYYY-MM-DD)
-      const startOfDay = `${days}T00:00:00.000Z`
-      const endOfDay = `${days}T23:59:59.999Z`
-      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
     }
-
-    const { data: duels } = await query
+    
+    // Transform flat RPC response and filter by userId and optional date
+    let duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({
+        coin_flip_won: d.coin_flip_won,
+        result: d.result,
+        created_at: d.created_at
+      }))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    
+    // Apply date filter if specified
+    if (days && days !== 'all') {
+      const startOfDay = new Date(`${days}T00:00:00.000Z`)
+      const endOfDay = new Date(`${days}T23:59:59.999Z`)
+      duels = duels.filter(d => {
+        const duelDate = new Date(d.created_at)
+        return duelDate >= startOfDay && duelDate <= endOfDay
+      })
+    }
 
     if (!duels || duels.length === 0) {
       return res.json({
@@ -331,29 +444,58 @@ router.get('/:sessionId/points-tracker', authenticate, async (req, res) => {
       ? (session.starting_rating || 1500)
       : session.game_mode === 'duelist_cup' ? 0 : 0
 
-    let query = supabaseAdmin
-      .from('duels')
-      .select(`
-        points_change,
-        result,
-        went_first,
-        coin_flip_won,
-        created_at,
-        player_deck:decks!duels_player_deck_id_fkey(name),
-        opponent_deck:decks!duels_opponent_deck_id_fkey(name)
-      `)
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true })
-
-    if (days && days !== 'all') {
-      // Filter by specific UTC date (YYYY-MM-DD)
-      const startOfDay = `${days}T00:00:00.000Z`
-      const endOfDay = `${days}T23:59:59.999Z`
-      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
     }
-
-    const { data: duels } = await query
+    
+    // Transform flat RPC response and filter by userId and optional date
+    let duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({
+        points_change: d.points_change,
+        result: d.result,
+        went_first: d.went_first,
+        coin_flip_won: d.coin_flip_won,
+        created_at: d.created_at,
+        player_deck: {
+          name: d.player_deck_name
+        },
+        opponent_deck: {
+          name: d.opponent_deck_name
+        }
+      }))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    
+    // Apply date filter if specified
+    if (days && days !== 'all') {
+      const startOfDay = new Date(`${days}T00:00:00.000Z`)
+      const endOfDay = new Date(`${days}T23:59:59.999Z`)
+      duels = duels.filter(d => {
+        const duelDate = new Date(d.created_at)
+        return duelDate >= startOfDay && duelDate <= endOfDay
+      })
+    }
 
     if (!duels || duels.length === 0) {
       return res.json({

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import Logo from './Logo';
+import AboutModal from './AboutModal';
 
 const languages = [
   { code: 'en', label: 'EN' },
@@ -16,6 +17,7 @@ export function Sidebar({ activeTab = 'active-session', onTabChange = () => {}, 
   const { i18n } = useTranslation();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [hoveredTab, setHoveredTab] = useState(null);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   const handleLanguageChange = (langCode) => {
     i18n.changeLanguage(langCode);
@@ -208,6 +210,30 @@ export function Sidebar({ activeTab = 'active-session', onTabChange = () => {}, 
         </div>
       )}
       
+      {/* Update button - positioned above language */}
+      <button
+        onClick={() => setShowAboutModal(true)}
+        style={{
+          position: 'absolute',
+          bottom: '128px',
+          backgroundColor: 'transparent',
+          border: 'none',
+          padding: '6px 8px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '6px',
+          transition: 'background-color 0.2s',
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(200, 200, 200, 0.4)'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '32px', height: '32px', color: 'white' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+      </button>
+
       {/* Language Selector */}
       <div style={{ position: 'absolute', bottom: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
         <button
@@ -299,6 +325,7 @@ export function Sidebar({ activeTab = 'active-session', onTabChange = () => {}, 
         </svg>
       </button>
 
+      <AboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
     </aside>
   );
 }

@@ -264,6 +264,13 @@ duelForm.addEventListener('submit', async (e) => {
   if (!validateForm()) return;
   
   try {
+    // Get fresh auth token to avoid expiration issues
+    let token = authToken;
+    if (window.electronAPI?.auth?.getToken) {
+      const freshToken = await window.electronAPI.auth.getToken();
+      if (freshToken) token = freshToken;
+    }
+    
     const payload = {
       sessionId: sessionId,
       playerDeckId: formState.yourDeck.id,
@@ -278,7 +285,7 @@ duelForm.addEventListener('submit', async (e) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });

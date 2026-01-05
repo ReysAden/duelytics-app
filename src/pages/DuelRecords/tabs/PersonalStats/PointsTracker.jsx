@@ -190,12 +190,6 @@ function PointsTracker({ sessionId, dateFilter, targetUserId = null }) {
           <div className="stat-card-label">Highest Reached</div>
           <div className="stat-card-value">{data.stats.highestPoints}</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-card-label">Net Change</div>
-          <div className="stat-card-value" style={{ color: data.stats.netChange >= 0 ? '#4ade80' : '#f87171' }}>
-            {data.stats.netChange >= 0 ? '+' : ''}{data.stats.netChange}
-          </div>
-        </div>
       </div>
     </div>
   );

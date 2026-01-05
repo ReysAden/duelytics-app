@@ -37,13 +37,13 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      sandbox: true,
+      sandbox: false, // Disabled for preload to work in development
       preload: path.join(__dirname, 'preload.js'),
     },
     show: false,
     frame: false,
     titleBarStyle: 'hidden',
-    icon: path.join(__dirname, '../assets/icon.png'),
+    icon: path.join(__dirname, '../assets/icon.ico'),
     autoHideMenuBar: true,
   })
 
@@ -182,6 +182,23 @@ ipcMain.handle('app:install-update', () => {
   if (!isDev) autoUpdater.quitAndInstall()
 })
 
+// Get app version
+ipcMain.handle('app:get-version', () => {
+  return app.getVersion()
+})
+
+// Handle manual check for updates
+ipcMain.handle('app:check-for-updates', async () => {
+  if (isDev) return { error: 'Updates not available in development' }
+  try {
+    const result = await autoUpdater.checkForUpdates()
+    return { success: true, updateInfo: result?.updateInfo }
+  } catch (err) {
+    console.error('Manual update check error:', err)
+    return { error: err.message }
+  }
+})
+
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -215,6 +232,24 @@ ipcMain.on('duel:submitted', (event, sessionId) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('duel:submitted', sessionId)
   }
+})
+
+// Get fresh auth token from main window for overlay
+ipcMain.handle('auth:getToken', async () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    // Ask the main window for a fresh token
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(null), 5000); // 5 second timeout
+      
+      ipcMain.once('auth:tokenResponse', (event, token) => {
+        clearTimeout(timeout);
+        resolve(token);
+      });
+      
+      mainWindow.webContents.send('auth:requestToken');
+    });
+  }
+  return null;
 })
 
 // Handle language change from main window to overlay

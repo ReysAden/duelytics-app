@@ -32,15 +32,16 @@ router.post('/', authenticate, duelSubmitLimiter, async (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found' })
 
     // Calculate points based on game mode
+    // Always use absolute value to handle user input errors (e.g., positive number on loss)
     let pointsChange = 0
     if (session.game_mode === 'ladder') {
       pointsChange = result === 'win' ? 1 : -1
     } else if (session.game_mode === 'duelist_cup') {
-      const cupPoints = pointsInput || 1000
+      const cupPoints = Math.abs(pointsInput || 1000)
       pointsChange = result === 'win' ? cupPoints : -cupPoints
     } else if (session.game_mode === 'rated') {
-      const ratingValue = pointsInput || 7.00
-      pointsChange = result === 'win' ? Math.abs(ratingValue) : -Math.abs(ratingValue)
+      const ratingValue = Math.abs(pointsInput || 7.00)
+      pointsChange = result === 'win' ? ratingValue : -ratingValue
     }
 
     // Insert duel (use supabaseAdmin to avoid RLS recursion issues)

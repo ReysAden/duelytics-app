@@ -1,9 +1,14 @@
 import './DeckAnalysis.css';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
 import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
-import { useCallback } from 'react';
+import { API_URL } from '../../../../config/api';
 
 function DeckAnalysis({ sessionId, dateFilter, targetUserId = null }) {
+  const [targetData, setTargetData] = useState([]);
+  const [targetLoading, setTargetLoading] = useState(false);
+  
   // Try archive context first, fallback to active session context
   let contextData;
   try {
@@ -11,7 +16,43 @@ function DeckAnalysis({ sessionId, dateFilter, targetUserId = null }) {
   } catch {
     contextData = useSessionData();
   }
-  const { personalDeckAnalysis: decks, loading } = contextData;
+  const { personalDeckAnalysis: contextDecks, loading: contextLoading } = contextData;
+  
+  // Fetch target user data if browsing another user
+  useEffect(() => {
+    if (targetUserId) {
+      fetchTargetUserData();
+    }
+  }, [targetUserId, sessionId, dateFilter]);
+  
+  const fetchTargetUserData = async () => {
+    setTargetLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      let url = `${API_URL}/sessions/${sessionId}/deck-analysis`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const result = await response.json();
+      if (result.decks) {
+        setTargetData(result.decks);
+      }
+    } catch (err) {
+      console.error('Failed to load target user deck analysis:', err);
+    } finally {
+      setTargetLoading(false);
+    }
+  };
+  
+  const decks = targetUserId ? targetData : contextDecks;
+  const loading = targetUserId ? targetLoading : contextLoading;
 
   // Memoize color calculation to avoid repeated lookups
   const getWinRateColor = useCallback((winRate) => {

@@ -11,25 +11,58 @@ router.get('/:sessionId/matchups', authenticate, async (req, res) => {
     const sessionId = req.params.sessionId
     const days = req.query.days
 
-    let query = supabaseAdmin
-      .from('duels')
-      .select(`
-        result,
-        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url),
-        opponent_deck:decks!duels_opponent_deck_id_fkey(id, name, image_url),
-        created_at
-      `)
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-
-    if (days && days !== 'all') {
-      // Filter by specific UTC date (YYYY-MM-DD)
-      const startOfDay = `${days}T00:00:00.000Z`
-      const endOfDay = `${days}T23:59:59.999Z`
-      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
     }
-
-    const { data: duels } = await query
+    
+    // Transform flat RPC response and filter by userId and optional date
+    let duels = allDuels
+      .filter(d => d.user_id === userId)
+      .map(d => ({
+        result: d.result,
+        player_deck: {
+          id: d.player_deck_id,
+          name: d.player_deck_name,
+          image_url: d.player_deck_image_url
+        },
+        opponent_deck: {
+          id: d.opponent_deck_id,
+          name: d.opponent_deck_name,
+          image_url: d.opponent_deck_image_url
+        },
+        created_at: d.created_at
+      }))
+    
+    // Apply date filter if specified
+    if (days && days !== 'all') {
+      const startOfDay = new Date(`${days}T00:00:00.000Z`)
+      const endOfDay = new Date(`${days}T23:59:59.999Z`)
+      duels = duels.filter(d => {
+        const duelDate = new Date(d.created_at)
+        return duelDate >= startOfDay && duelDate <= endOfDay
+      })
+    }
 
     if (!duels || duels.length === 0) {
       return res.json({ matchups: [], decks: { player: [], opponent: [] } })
@@ -95,15 +128,47 @@ router.get('/:sessionId/session-matchups', authenticate, async (req, res) => {
   try {
     const sessionId = req.params.sessionId
 
-    // Get all duels in the session
-    const { data: duels } = await supabaseAdmin
-      .from('duels')
-      .select(`
-        result,
-        player_deck:decks!duels_player_deck_id_fkey(id, name, image_url),
-        opponent_deck:decks!duels_opponent_deck_id_fkey(id, name, image_url)
-      `)
-      .eq('session_id', sessionId)
+    // Fetch all duels in batches using paginated RPC to bypass 1000 row limit
+    let allDuels = []
+    let offset = 0
+    const batchSize = 1000
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: batch, error } = await supabaseAdmin
+        .rpc('get_session_duels_paginated', {
+          p_session_id: sessionId,
+          p_limit: batchSize,
+          p_offset: offset
+        })
+      
+      if (error) throw error
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false
+      } else {
+        allDuels = allDuels.concat(batch)
+        hasMore = batch.length === batchSize
+        offset += batchSize
+      }
+    }
+    
+    console.log('Session Matchups - Total duels fetched:', allDuels.length)
+    
+    // Transform flat RPC response to match original structure
+    const duels = allDuels.map(d => ({
+      result: d.result,
+      player_deck: {
+        id: d.player_deck_id,
+        name: d.player_deck_name,
+        image_url: d.player_deck_image_url
+      },
+      opponent_deck: {
+        id: d.opponent_deck_id,
+        name: d.opponent_deck_name,
+        image_url: d.opponent_deck_image_url
+      }
+    }))
 
     if (!duels || duels.length === 0) {
       return res.json({ matchups: [], decks: [] })

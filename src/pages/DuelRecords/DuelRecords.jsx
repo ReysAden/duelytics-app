@@ -208,9 +208,16 @@ function DuelRecordsContent() {
           {activeTab === 'deck-winrate' && <DeckWinrates sessionId={sessionId} />}
           {activeTab === 'matchup-matrix' && <MatchupMatrix viewMode={activeSubTab} />}
           {activeTab === 'history' && <DuelHistory sessionId={sessionId} onDuelDeleted={() => {
-            // Refresh user stats and duels list after deletion
+            // Invalidate all caches and refresh all data after deletion
+            invalidateCache(['leaderboard', 'duels', 'userStats', 'deckWinrates', 'personalOverview', 'personalDeckAnalysis', 'personalMatchups', 'matchups']);
             fetchUserStatsImmediate();
             fetchDuelsImmediate();
+            fetchLeaderboardImmediate();
+            fetchDeckWinratesImmediate();
+            fetchPersonalOverviewImmediate();
+            fetchPersonalDeckAnalysisImmediate();
+            fetchPersonalMatchupsImmediate();
+            fetchMatchupsImmediate();
           }} />}
           {activeTab === 'leaderboard' && <Leaderboard />}
         </div>

@@ -1,11 +1,16 @@
 import './Matchups.css';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
 import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
+import { API_URL } from '../../../../config/api';
 import MatrixGrid from './Matchups/MatrixGrid';
 import MostFaced from './Matchups/MostFaced';
 
 function Matchups({ sessionId, dateFilter, targetUserId = null }) {
+  const [targetData, setTargetData] = useState(null);
+  const [targetLoading, setTargetLoading] = useState(false);
+  
   // Try archive context first, fallback to active session context
   let contextData;
   try {
@@ -13,9 +18,43 @@ function Matchups({ sessionId, dateFilter, targetUserId = null }) {
   } catch {
     contextData = useSessionData();
   }
-  const { personalMatchups, loading } = contextData;
+  const { personalMatchups: contextMatchups, loading: contextLoading } = contextData;
+  
+  // Fetch target user data if browsing another user
+  useEffect(() => {
+    if (targetUserId) {
+      fetchTargetUserData();
+    }
+  }, [targetUserId, sessionId, dateFilter]);
+  
+  const fetchTargetUserData = async () => {
+    setTargetLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      let url = `${API_URL}/sessions/${sessionId}/matchups`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const result = await response.json();
+      setTargetData(result);
+    } catch (err) {
+      console.error('Failed to load target user matchups:', err);
+    } finally {
+      setTargetLoading(false);
+    }
+  };
+  
+  const personalMatchups = targetUserId ? targetData : contextMatchups;
   const matchups = personalMatchups?.matchups || [];
   const decks = personalMatchups?.decks || [];
+  const loading = targetUserId ? targetLoading : contextLoading;
   
   const [viewMode, setViewMode] = useState('matrix');
 

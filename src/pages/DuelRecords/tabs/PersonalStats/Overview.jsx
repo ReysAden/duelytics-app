@@ -1,8 +1,14 @@
 import './Overview.css';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../../../lib/supabase';
 import { useSessionData } from '../../../../contexts/SessionDataContext';
 import { useArchiveSessionData } from '../../../../contexts/ArchiveSessionDataContext';
+import { API_URL } from '../../../../config/api';
 
 function Overview({ sessionId, dateFilter, targetUserId = null }) {
+  const [targetData, setTargetData] = useState(null);
+  const [targetLoading, setTargetLoading] = useState(false);
+  
   // Try archive context first, fallback to active session context
   let contextData;
   try {
@@ -10,10 +16,43 @@ function Overview({ sessionId, dateFilter, targetUserId = null }) {
   } catch {
     contextData = useSessionData();
   }
-  const { personalOverview, loading } = contextData;
+  const { personalOverview, loading: contextLoading } = contextData;
   
-  // Default stats if no data yet
-  const stats = personalOverview || {
+  // Fetch target user data if browsing another user
+  useEffect(() => {
+    if (targetUserId) {
+      fetchTargetUserData();
+    }
+  }, [targetUserId, sessionId, dateFilter]);
+  
+  const fetchTargetUserData = async () => {
+    setTargetLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      let url = `${API_URL}/sessions/${sessionId}/overview`;
+      const params = new URLSearchParams();
+      if (dateFilter !== 'all') params.append('days', dateFilter);
+      if (targetUserId) params.append('userId', targetUserId);
+      if (params.toString()) url += `?${params.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const result = await response.json();
+      if (result.overview) {
+        setTargetData(result.overview);
+      }
+    } catch (err) {
+      console.error('Failed to load target user overview:', err);
+    } finally {
+      setTargetLoading(false);
+    }
+  };
+  
+  // Use target data if browsing another user, otherwise use context data
+  const stats = targetUserId ? (targetData || {
     totalGames: 0,
     winRate: 0,
     firstWinRate: 0,
@@ -23,10 +62,19 @@ function Overview({ sessionId, dateFilter, targetUserId = null }) {
     bestDeck: { name: '-', winRate: 0, games: 0 },
     worstDeck: { name: '-', winRate: 0, games: 0 },
     mostFaced: []
-  };
-
-  // Data is now pre-fetched and cached in SessionDataContext
-  // No need for component-level fetching!
+  }) : (personalOverview || {
+    totalGames: 0,
+    winRate: 0,
+    firstWinRate: 0,
+    firstGames: 0,
+    secondWinRate: 0,
+    secondGames: 0,
+    bestDeck: { name: '-', winRate: 0, games: 0 },
+    worstDeck: { name: '-', winRate: 0, games: 0 },
+    mostFaced: []
+  });
+  
+  const loading = targetUserId ? targetLoading : contextLoading;
 
   if (loading) return <div className="overview-loading">Loading...</div>;
 

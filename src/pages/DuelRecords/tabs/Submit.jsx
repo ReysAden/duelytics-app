@@ -127,6 +127,7 @@ function Submit({ onDuelSubmitted }) {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       const duels = await response.json();
+      console.log('Duels fetched:', duels);
       
       const playerUsage = {};
       const opponentUsage = {};
@@ -144,6 +145,7 @@ function Submit({ onDuelSubmitted }) {
         });
       }
       
+      console.log('Deck usage loaded:', { player: playerUsage, opponent: opponentUsage });
       setDeckUsage({ player: playerUsage, opponent: opponentUsage });
     } catch (err) {
       console.error('Failed to load deck usage:', err);

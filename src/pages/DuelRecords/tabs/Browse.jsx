@@ -25,15 +25,25 @@ function Browse({ sessionData }) {
   const fetchParticipants = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/participants`, {
+      
+      // Fetch leaderboard instead of participants to get proper sorting
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/leaderboard`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
         }
       });
       
       const data = await response.json();
-      if (data.participants) {
-        setParticipants(data.participants);
+      if (data.leaderboard) {
+        // Transform leaderboard data to match participant structure
+        const participantsWithRank = data.leaderboard.map((player, index) => ({
+          user_id: player.user_id,
+          username: player.username,
+          rank: index + 1,
+          points: player.points,
+          tier_name: player.tier_name
+        }));
+        setParticipants(participantsWithRank);
       }
     } catch (err) {
       console.error('Failed to load participants:', err);
@@ -75,7 +85,8 @@ function Browse({ sessionData }) {
                         setShowDropdown(false);
                       }}
                     >
-                      {participant.username}
+                      <span className="dropdown-rank">#{participant.rank}</span>
+                      <span>{participant.username}</span>
                     </button>
                   ))
                 ) : (

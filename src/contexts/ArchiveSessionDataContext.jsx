@@ -58,7 +58,7 @@ export function ArchiveSessionDataProvider({ sessionId, children }) {
         fetch(`${API_URL}/sessions/${sessionId}/leaderboard`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
-        fetch(`${API_URL}/sessions/${sessionId}/matchups`, {
+        fetch(`${API_URL}/sessions/${sessionId}/session-matchups`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }),
         fetch(`${API_URL}/sessions/${sessionId}/duels`, {
