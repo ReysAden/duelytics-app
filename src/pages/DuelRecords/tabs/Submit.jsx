@@ -404,7 +404,7 @@ function Submit({ onDuelSubmitted }) {
                     className="dropdown-item"
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseDown={() => {
-                      setFormData(prev => ({ ...prev, coinFlip: 'win' }));
+                      setFormData(prev => ({ ...prev, coinFlip: 'win', turnOrder: 'first' }));
                       setShowCoinFlipDropdown(false);
                     }}
                   >
@@ -415,7 +415,7 @@ function Submit({ onDuelSubmitted }) {
                     className="dropdown-item"
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseDown={() => {
-                      setFormData(prev => ({ ...prev, coinFlip: 'loss' }));
+                      setFormData(prev => ({ ...prev, coinFlip: 'loss', turnOrder: 'second' }));
                       setShowCoinFlipDropdown(false);
                     }}
                   >
