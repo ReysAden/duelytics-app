@@ -1,6 +1,6 @@
 {
   "name": "duelytics-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Yu-Gi-Oh! Master Duel Tournament Tracker",
   "main": "electron/main.js",
   "scripts": {
