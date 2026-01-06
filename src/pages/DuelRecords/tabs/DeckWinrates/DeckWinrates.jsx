@@ -66,11 +66,11 @@ function DeckWinrates() {
                 </div>
                 <div className="deck-turn-stats">
                   <div className="turn-stat">
-                    <img src="/first.svg" alt="First" className="turn-stat-icon" />
+                    <img src="./first.svg" alt="First" className="turn-stat-icon" />
                     <span style={{ color: getWinRateColor(deck.firstWinRate) }}>{deck.firstWinRate.toFixed(1)}%</span>
                   </div>
                   <div className="turn-stat">
-                    <img src="/second.svg" alt="Second" className="turn-stat-icon" />
+                    <img src="./second.svg" alt="Second" className="turn-stat-icon" />
                     <span style={{ color: getWinRateColor(deck.secondWinRate) }}>{deck.secondWinRate.toFixed(1)}%</span>
                   </div>
                 </div>
