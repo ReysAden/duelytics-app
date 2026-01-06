@@ -102,6 +102,8 @@ function createWindow() {
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    // Temporarily open DevTools in production for debugging
+    mainWindow.webContents.openDevTools()
   }
 
   // Show window when ready to prevent visual flash
@@ -153,25 +155,42 @@ app.whenReady().then(() => {
 })
 
 function setupAutoUpdater() {
-  if (isDev) return
+  if (isDev) {
+    console.log('Auto-updater disabled in development')
+    return
+  }
+  
+  console.log('Setting up auto-updater...')
+  console.log('Current version:', app.getVersion())
+  
   // Check for updates on app start and notify
   autoUpdater.checkForUpdatesAndNotify()
 
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for updates...')
+  })
+
   // Notify renderer process about update availability
-  autoUpdater.on('update-available', () => {
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info)
     if (mainWindow) {
       mainWindow.webContents.send('update-available')
     }
   })
 
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('Update not available:', info)
+  })
+
   // Notify when update is downloaded and ready to install
-  autoUpdater.on('update-downloaded', () => {
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded:', info)
     if (mainWindow) {
       mainWindow.webContents.send('update-ready')
     }
   })
 
-  // Handle update errors silently
+  // Handle update errors
   autoUpdater.on('error', (err) => {
     console.error('Auto-updater error:', err)
   })
@@ -190,8 +209,10 @@ ipcMain.handle('app:get-version', () => {
 // Handle manual check for updates
 ipcMain.handle('app:check-for-updates', async () => {
   if (isDev) return { error: 'Updates not available in development' }
+  console.log('Manual update check requested')
   try {
     const result = await autoUpdater.checkForUpdates()
+    console.log('Manual update check result:', result)
     return { success: true, updateInfo: result?.updateInfo }
   } catch (err) {
     console.error('Manual update check error:', err)

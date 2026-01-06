@@ -254,6 +254,20 @@ document.querySelectorAll('[data-field]').forEach(btn => {
     btn.classList.add('active');
     
     formState[field] = value;
+    
+    // Auto-select turn order based on coin flip
+    if (field === 'coinFlip') {
+      const turnOrder = value === 'win' ? 'first' : 'second';
+      formState.turnOrder = turnOrder;
+      // Update turn order button visual state
+      document.querySelectorAll('[data-field="turnOrder"]').forEach(b => {
+        b.classList.remove('active');
+        if (b.getAttribute('data-value') === turnOrder) {
+          b.classList.add('active');
+        }
+      });
+    }
+    
     validateForm();
   });
 });
