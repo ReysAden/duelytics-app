@@ -38,8 +38,11 @@ function App() {
     
     try {
       const isElectron = typeof window !== 'undefined' && window.electron?.isElectron
+      console.log('Login attempt - isElectron:', isElectron)
+      console.log('window.electron:', window.electron)
       
       if (isElectron) {
+        console.log('Using Electron desktop auth flow')
         // Desktop app OAuth flow - generate unique session ID
         const sessionId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
         
