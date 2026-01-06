@@ -37,9 +37,9 @@ function App() {
     setLoginLoading(true)
     
     try {
-      const isDesktopApp = window.location.protocol === 'file:'
+      const isElectron = typeof window !== 'undefined' && window.electron?.isElectron
       
-      if (isDesktopApp) {
+      if (isElectron) {
         // Desktop app OAuth flow - generate unique session ID
         const sessionId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
         

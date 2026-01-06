@@ -65,7 +65,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico",
+      "icon": "public/AppIcon.png",
       "sign": null,
       "verifyUpdateCodeSignature": false,
       "artifactName": "${productName}.Setup.${version}.${ext}"

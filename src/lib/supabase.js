@@ -3,12 +3,34 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Custom storage adapter for Electron
+const customStorageAdapter = {
+  getItem: (key) => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem(key)
+    }
+    return null
+  },
+  setItem: (key, value) => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, value)
+    }
+  },
+  removeItem: (key) => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(key)
+    }
+  }
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storage: customStorageAdapter,
+    storageKey: 'duelytics-auth'
   }
 })
 
