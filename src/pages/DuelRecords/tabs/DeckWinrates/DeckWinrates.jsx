@@ -36,12 +36,6 @@ function DeckWinrates() {
     );
   }
 
-  console.log('DeckWinrates Component - Rendering with data:', deckWinrates);
-  console.log('Number of decks:', deckWinrates.length);
-  deckWinrates.forEach(deck => {
-    console.log(`  ${deck.name}: ${deck.totalGames} games, ${deck.wins}W-${deck.losses}L`);
-  });
-
   return (
     <div className="deck-winrates-container">
       <div className="deck-grid">

@@ -143,7 +143,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       });
       const data = await response.json();
       if (data.stats) {
-        console.log('✅ Stats updated:', data.stats);
         setUserStats(data.stats);
       }
     } catch (err) {
@@ -165,7 +164,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       });
       const data = await response.json();
       if (data) {
-        console.log('✅ Duels updated, count:', Array.isArray(data) ? data.length : 0);
         setDuels(Array.isArray(data) ? data : []);
       }
     } catch (err) {
@@ -210,12 +208,7 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
         }
       });
       const data = await response.json();
-      console.log('Deck Winrates API Response:', data);
       if (data.decks) {
-        console.log('Deck Winrates - Number of decks:', data.decks.length);
-        data.decks.forEach(deck => {
-          console.log(`  ${deck.name}: ${deck.totalGames} games`);
-        });
         setDeckWinrates(data.decks);
       }
     } catch (err) {
@@ -303,7 +296,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       sessionId,
       // onDuelAdded - optimistically add to cache
       (newDuel) => {
-        console.log('🔥 Real-time: Duel added', newDuel);
         // Refetch to get properly formatted data with deck names
         fetchDuelsImmediate();
         fetchUserStatsImmediate();
@@ -317,7 +309,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       },
       // onDuelUpdated
       (updatedDuel) => {
-        console.log('🔥 Real-time: Duel updated', updatedDuel);
         fetchDuelsImmediate();
         fetchUserStatsImmediate();
         fetchPersonalOverviewImmediate();
@@ -325,7 +316,6 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
       },
       // onDuelDeleted
       (deletedDuel) => {
-        console.log('🔥 Real-time: Duel deleted', deletedDuel);
         fetchDuelsImmediate();
         fetchUserStatsImmediate();
         fetchLeaderboardImmediate();
@@ -338,20 +328,17 @@ export function SessionDataProvider({ sessionId, activeTab, children }) {
 
     // On player stats change: update userStats immediately
     subscriptionsRef.current.stats = db.subscribeToPlayerStats(sessionId, (newStats) => {
-      console.log('🔥 Real-time: Stats updated', newStats);
       setUserStats(newStats);
     });
 
     // On leaderboard change: fetch leaderboard immediately
     subscriptionsRef.current.leaderboard = db.subscribeToLeaderboard(sessionId, () => {
-      console.log('🔥 Real-time: Leaderboard changed');
       fetchLeaderboardImmediate();
     });
 
     // On session change: update session data
     subscriptionsRef.current.session = db.subscribeToSessions((newSession) => {
       if (newSession.id === sessionId) {
-        console.log('🔥 Real-time: Session updated', newSession);
         setSessionData(newSession);
       }
     });

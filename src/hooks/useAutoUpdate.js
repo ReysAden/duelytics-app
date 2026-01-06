@@ -13,13 +13,11 @@ export function useAutoUpdate() {
 
     // Listen for update available (downloading in background)
     window.electronAPI.onUpdateAvailable(() => {
-      console.log('Update available, downloading in background...')
       setUpdateAvailable(true)
     })
 
     // Listen for update ready (downloaded, ready to install)
     window.electronAPI.onUpdateReady(() => {
-      console.log('Update ready to install')
       setUpdateReady(true)
     })
   }, [])

@@ -111,10 +111,8 @@ function DuelRecordsContent() {
     if (!window.electronAPI?.onDuelSubmitted) return;
 
     const handleDuelSubmitted = (submittedSessionId) => {
-      console.log('🔔 Duel submitted from overlay for session:', submittedSessionId);
       // Only refresh if it's for the current session
       if (submittedSessionId === sessionId) {
-        console.log('🔄 Refreshing ALL data after overlay submission');
         // Invalidate cache for all data types
         invalidateCache(['leaderboard', 'duels', 'userStats', 'deckWinrates', 'personalOverview', 'personalDeckAnalysis', 'personalMatchups', 'matchups']);
         // Fetch all data types immediately

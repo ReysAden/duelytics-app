@@ -104,7 +104,6 @@ export const db = {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
         (payload) => {
-          console.log('📡 Supabase event: INSERT duels', payload);
           onDuelAdded?.(payload.new);
         }
       )
@@ -112,7 +111,6 @@ export const db = {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
         (payload) => {
-          console.log('📡 Supabase event: UPDATE duels', payload);
           onDuelUpdated?.(payload.new);
         }
       )
@@ -120,13 +118,10 @@ export const db = {
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'duels', filter: `session_id=eq.${sessionId}` },
         (payload) => {
-          console.log('📡 Supabase event: DELETE duels', payload);
           onDuelDeleted?.(payload.old);
         }
       )
-      .subscribe((status) => {
-        console.log(`✅ Duels subscription status for session ${sessionId}:`, status);
-      });
+      .subscribe();
     
     return channel;
   },

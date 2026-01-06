@@ -102,8 +102,6 @@ function createWindow() {
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
-    // Open DevTools in production for debugging (can be removed later)
-    mainWindow.webContents.openDevTools()
   }
 
   // Show window when ready to prevent visual flash

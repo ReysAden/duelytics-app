@@ -95,7 +95,7 @@ function Overview({ sessionId, dateFilter, targetUserId = null }) {
       <div className="stat-row">
         <div className="stat-card">
           <div className="turn-header">
-            <img src="/first.svg" alt="First" className="turn-icon" />
+            <img src="./first.svg" alt="First" className="turn-icon" />
             <span>Going First</span>
           </div>
           <div className="stat-card-value">{stats.firstWinRate.toFixed(1)}%</div>
@@ -103,7 +103,7 @@ function Overview({ sessionId, dateFilter, targetUserId = null }) {
         </div>
         <div className="stat-card">
           <div className="turn-header">
-            <img src="/second.svg" alt="Second" className="turn-icon" />
+            <img src="./second.svg" alt="Second" className="turn-icon" />
             <span>Going Second</span>
           </div>
           <div className="stat-card-value">{stats.secondWinRate.toFixed(1)}%</div>

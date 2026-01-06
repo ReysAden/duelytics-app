@@ -127,7 +127,6 @@ export function AuthProvider({ children }) {
     
     // Handle deep link OAuth callback (for Electron)
     const handleDeepLink = async (url) => {
-      console.log('Received deep link:', url)
       // Extract the full callback URL from the deep link
       // Format: duelytics://auth/callback?code=...&...  
       const callbackUrl = url.replace('duelytics://auth/callback', 'https://temp.com')
